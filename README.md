@@ -1,47 +1,30 @@
-# Handwritten Digit Recognizer
+# SnapFix
 
-Draw a digit from 0 to 9 and a convolutional neural network (CNN) guesses it live, right in your browser.
-
-**[Try the live demo](https://vitamindgoat-digit-recognizer.static.hf.space/index.html)**
+SnapFix makes getting help for everyday home problems faster and easier. Take a photo of whatever is broken, like a leaking pipe, a broken fence, or an overgrown lawn, and SnapFix uses AI to identify the problem and point you toward the right help.
 
 ## About
 
-I built this to learn how neural networks actually work, instead of just using them. I trained a small convolutional neural network in Python on the MNIST dataset of handwritten digits, then set it up to run entirely in the browser. There is no server and nothing to install. You draw on the canvas, and the model predicts the number in real time.
+I built SnapFix around one simple idea: fixing things around the house is confusing when you do not know what you are looking at or who to call. SnapFix lets you snap a photo and get a clear answer, so you know what the problem is and what to do next.
 
 ## Features
 
-- Draw any digit (0 to 9) on the canvas and get an instant prediction
-- A convolutional neural network (CNN) does the recognition
-- Runs fully in the browser, on desktop or phone
-- Clear the canvas and try again as many times as you want
-
-## How it works
-
-1. The model is a convolutional neural network trained on the MNIST dataset of handwritten digits.
-2. Your drawing is captured from the canvas and resized to the 28x28 grayscale format the model expects.
-3. The model runs in the browser and returns the digit it thinks you drew.
+- Snap a photo of a household problem
+- AI identifies what is wrong from the image
+- Points you toward the right kind of help or the next step
+- Simple, mobile-first design
 
 ## Built with
 
-- Python (model training)
-- A convolutional neural network (CNN)
-- MNIST dataset
-- HTML, CSS, and JavaScript for the in-browser app
-- Hosted on Hugging Face Spaces
+- TypeScript
+- AI image recognition
 
-## Run it locally
+## Status
 
-This is a static site, so you can open `index.html` directly in your browser. To serve the folder instead, run any static server:
-
-```
-python -m http.server
-```
-
-Then open `http://localhost:8000`.
+This is a project I designed and built to explore the idea end to end, from the concept and flow to the pitch.
 
 ## License
 
-MIT. See the `LICENSE` file for details.
+See the `LICENSE` file in this repository.
 
 ---
 
