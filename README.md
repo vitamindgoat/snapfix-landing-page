@@ -1,30 +1,31 @@
-# SnapFix
+# SnapFix (Landing Page)
 
-SnapFix makes getting help for everyday home problems faster and easier. Take a photo of whatever is broken, like a leaking pipe, a broken fence, or an overgrown lawn, and SnapFix uses AI to identify the problem and point you toward the right help.
+The landing page for SnapFix, an AI home-help app. Take a photo of a household problem, like a leaking pipe, a broken fence, or an overgrown lawn, and SnapFix identifies the issue and matches you with qualified local pros.
+
+**[View the live site](https://snapfix-dun.vercel.app)**
 
 ## About
 
-I built SnapFix around one simple idea: fixing things around the house is confusing when you do not know what you are looking at or who to call. SnapFix lets you snap a photo and get a clear answer, so you know what the problem is and what to do next.
-
-## Features
-
-- Snap a photo of a household problem
-- AI identifies what is wrong from the image
-- Points you toward the right kind of help or the next step
-- Simple, mobile-first design
+I designed and built this landing page from scratch as the front end for SnapFix. The goal was a clean, mobile-first page that explains the product in a few seconds: snap the problem, fix the problem.
 
 ## Built with
 
+- Next.js
 - TypeScript
-- AI image recognition
+- Tailwind CSS
 
-## Status
+## Run it locally
 
-This is a project I designed and built to explore the idea end to end, from the concept and flow to the pitch.
+```
+npm install
+npm run dev
+```
+
+Then open `http://localhost:3000`.
 
 ## License
 
-See the `LICENSE` file in this repository.
+MIT. See the `LICENSE` file for details.
 
 ---
 
