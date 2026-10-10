@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Handwritten Digit Recognizer
 
-## Getting Started
+Draw a digit from 0 to 9 and a convolutional neural network (CNN) guesses it live, right in your browser.
 
-First, run the development server:
+**[Try the live demo](https://vitamindgoat-digit-recognizer.static.hf.space/index.html)**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## About
+
+I built this to learn how neural networks actually work, instead of just using them. I trained a small convolutional neural network in Python on the MNIST dataset of handwritten digits, then set it up to run entirely in the browser. There is no server and nothing to install. You draw on the canvas, and the model predicts the number in real time.
+
+## Features
+
+- Draw any digit (0 to 9) on the canvas and get an instant prediction
+- A convolutional neural network (CNN) does the recognition
+- Runs fully in the browser, on desktop or phone
+- Clear the canvas and try again as many times as you want
+
+## How it works
+
+1. The model is a convolutional neural network trained on the MNIST dataset of handwritten digits.
+2. Your drawing is captured from the canvas and resized to the 28x28 grayscale format the model expects.
+3. The model runs in the browser and returns the digit it thinks you drew.
+
+## Built with
+
+- Python (model training)
+- A convolutional neural network (CNN)
+- MNIST dataset
+- HTML, CSS, and JavaScript for the in-browser app
+- Hosted on Hugging Face Spaces
+
+## Run it locally
+
+This is a static site, so you can open `index.html` directly in your browser. To serve the folder instead, run any static server:
+
+```
+python -m http.server
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open `http://localhost:8000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## License
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+MIT. See the `LICENSE` file for details.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built by Oleksandr Rybitskyi.
+GitHub: [@vitamindgoat](https://github.com/vitamindgoat) · Hugging Face: [@vitamindgoat](https://huggingface.co/vitamindgoat)
