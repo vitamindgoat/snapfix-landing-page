@@ -224,6 +224,19 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .about .sig small{display:block;font-family:var(--body);font-weight:400;color:var(--dim-on-paper);font-size:.9rem;margin-top:4px}
 @media (max-width:760px){.about .grid{grid-template-columns:1fr;gap:28px}}
 
+/* captions and colophon */
+.cap{font-size:.82rem;color:var(--text-dim);margin:0;letter-spacing:.005em}
+.hero-cap{position:absolute;right:var(--gutter);bottom:36px;max-width:22rem;text-align:right}
+.hero{position:relative}
+.cov-cap{position:absolute;right:var(--gutter);bottom:7svh;color:var(--dim-on-paper);max-width:24rem;text-align:right;transition:opacity .3s ease}
+.colophon{background:var(--paper);color:var(--text-on-paper);padding-block:0 12vh}
+.colophon h2{font-size:1.1rem;font-weight:600;letter-spacing:-0.01em;line-height:1.2;padding-top:40px;border-top:1px solid var(--rule-paper);margin-bottom:28px}
+.colophon dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:32px;margin:0}
+.colophon dt{font-weight:600;font-size:.95rem;margin-bottom:8px}
+.colophon dd{margin:0;color:#3E3A34;font-size:.95rem;line-height:1.5;max-width:30ch}
+.colophon a{color:var(--text-on-paper)}
+@media (max-width:960px){.colophon dl{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){.hero-cap{position:static;text-align:left;margin-top:28px;max-width:none}.cov-cap{position:static;text-align:left;margin-top:18px}.colophon dl{grid-template-columns:1fr;gap:22px}}
 /* footer */
 footer{background:var(--paper);color:var(--dim-on-paper);padding-block:28px 40px;border-top:1px solid var(--rule-paper);font-size:.9rem;position:relative}
 footer .row{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}
@@ -277,6 +290,7 @@ footer a{text-decoration:none}
         <a class="btn btn-line" href="#about">About the project</a>
       </div>
     </div>
+    <p class="cap hero-cap">Copper pipe modeled in Blender, rendered live in your browser.</p>
   </section>
 
   <section class="fall" id="fall" aria-label="The problem">
@@ -334,6 +348,7 @@ footer a{text-decoration:none}
         </ul>
         <p class="more">Plus similar everyday repairs where the hard part is knowing what you're looking at.</p>
       </div>
+      <p class="cap cov-cap" id="covcap" aria-live="polite">Copper pipe, modeled in Blender.</p>
     </div>
   </section>
 
@@ -357,6 +372,15 @@ footer a{text-decoration:none}
     </div>
   </section>
 
+  <section class="colophon gutter" aria-label="How this page is made">
+    <h2>How this page is made</h2>
+    <dl>
+      <div><dt>3D models</dt><dd>The copper pipe and picket fence were modeled in Blender, with materials baked to textures. The light bulb and garden sprinkler are photogrammetry scans from Poly Haven, used under CC0.</dd></div>
+      <div><dt>Rendering</dt><dd>Everything you see moving is rendered live in your browser with Three.js. No video, no pre-rendered frames.</dd></div>
+      <div><dt>Type</dt><dd>Bricolage Grotesque for headlines, Schibsted Grotesk for text. Both self-hosted.</dd></div>
+      <div><dt>Code</dt><dd>Plain HTML, CSS and JavaScript, no framework and no build step. Hosted on Vercel. <a href="https://github.com/vitamindgoat/snapfix-landing-page">Source on GitHub.</a></dd></div>
+    </dl>
+  </section>
   <footer class="gutter">
     <div class="row">
       <a class="mark" href="#top"><i></i>SnapFix</a>
@@ -500,6 +524,7 @@ if(renderer){
   const result=$('#result'), vf=$('#vf'), scan=$('#scan'), tags=[$('#tag0'),$('#tag1'),$('#tag2')], flash=$('#flash');
   const covItems=[...document.querySelectorAll('#cov li')];
   const fall=$('#fall'), fallLines=[$('#fl1'),$('#fl2'),$('#fl3')], spot=$('#spot');
+  const covcap=$('#covcap'), covCaps=['Copper pipe, modeled in Blender.','Incandescent bulb, a photogrammetry scan by Josh Dean on Poly Haven.','Picket fence, modeled in Blender.','Garden sprinkler, a photogrammetry scan by Amal Kumar on Poly Haven.'];
   let W=innerWidth,H=innerHeight,mobile=W<760;
   function resize(){ W=innerWidth;H=innerHeight;mobile=W<760; camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H,false); }
   addEventListener('resize',resize); resize();
@@ -660,6 +685,7 @@ if(renderer){
 
     /* ---- covers list ---- */
     covItems.forEach((li,i)=>li.classList.toggle('on', inCov && i===covIdx));
+    if(inCov && covcap.dataset.i!==String(covIdx)){ covcap.dataset.i=String(covIdx); covcap.textContent=covCaps[covIdx]; }
 
     renderer.render(scene,camera);
     if(!document.hidden) requestAnimationFrame(frame);
