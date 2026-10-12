@@ -3,12 +3,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Camera } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "#features", label: "Features" },
-  { href: "#proof", label: "Reviews" },
-  { href: "#pricing", label: "Pricing" },
+  { href: "#features", label: "How it works" },
   { href: "#faq", label: "FAQ" },
 ];
 
@@ -44,13 +41,10 @@ export function Navbar() {
 
         <div className="hidden md:flex items-center gap-3">
           <a
-            href="#download"
-            className={cn(
-              "inline-flex h-12 items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-fg shadow-medium",
-              "transition-transform duration-150 hover:scale-[1.02]",
-            )}
+            href="#features"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-fg shadow-medium transition-transform duration-150 hover:scale-[1.02]"
           >
-            Get the app
+            See how it works
           </a>
         </div>
 
@@ -83,13 +77,6 @@ export function Navbar() {
                   {l.label}
                 </a>
               ))}
-              <a
-                href="#download"
-                onClick={() => setOpen(false)}
-                className="mt-2 inline-flex h-12 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-fg shadow-medium"
-              >
-                Get the app
-              </a>
             </div>
           </motion.div>
         )}

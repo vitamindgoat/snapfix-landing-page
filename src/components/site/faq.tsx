@@ -7,28 +7,24 @@ import { cn } from "@/lib/utils";
 
 const faqs = [
   {
-    q: "How accurate is the AI diagnosis?",
-    a: "Our model is trained on millions of labeled home-repair photos and reaches 94% accuracy on top-trade classification. When confidence is low, SnapFix asks a clarifying question or routes you to a generalist who can scope on arrival.",
+    q: "What is SnapFix?",
+    a: "SnapFix is an app that lets you take a photo of a problem around your home and uses AI to identify what is likely wrong, so you know what kind of help you need.",
   },
   {
-    q: "Are the pros background-checked?",
-    a: "Every pro is license-verified, insurance-confirmed, and identity-checked. Pro plan users only see top-rated, background-checked pros — the rest are filtered out automatically.",
+    q: "How does it work?",
+    a: "You snap a photo of the issue, like a leak, a broken fence, or an overgrown yard. An image model looks at the photo, identifies the type of problem, and points you toward the kind of pro who handles it.",
   },
   {
-    q: "What if the quote changes after the pro arrives?",
-    a: "Quotes are fixed for the scope in your photo. If the pro spots something extra, you get a written change-order before any work continues. You can decline and only pay the diagnostic fee.",
+    q: "What kinds of problems can it handle?",
+    a: "Everyday home issues such as plumbing leaks, broken fixtures, fences, and yard work. The goal is to cover the common things people are not sure how to describe or who to call for.",
   },
   {
-    q: "Which trades do you cover?",
-    a: "Plumbing, electrical, HVAC, carpentry, fencing, landscaping, appliance repair, pest control, and general handywork. Expanding to roofing and solar in 2026.",
+    q: "Why build SnapFix?",
+    a: "Fixing things around the house is confusing when you do not know what you are looking at or who to call. SnapFix is meant to make that first step simple: snap a photo and get a clear answer.",
   },
   {
-    q: "Do you work outside the US?",
-    a: "SnapFix is live in the US and Canada. UK, Ireland, and Australia roll out next. Join the waitlist in-app to be notified when your area opens.",
-  },
-  {
-    q: "Can I cancel anytime?",
-    a: "Yes. Free is free forever. Pro and Business are month-to-month with no commitment — cancel from Settings and you keep access through the billing period.",
+    q: "Is SnapFix finished?",
+    a: "SnapFix is a project in active development. Parts of it are still being built and improved.",
   },
 ];
 
@@ -44,14 +40,11 @@ export function FAQ() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="mx-auto max-w-2xl text-center"
       >
-        <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-          FAQ
-        </span>
-        <h2 className="mt-4 text-3xl md:text-4xl font-bold tracking-tight">
+        <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
           Questions, answered.
         </h2>
         <p className="mt-3 text-muted text-base md:text-lg">
-          Everything you need to know before snapping your first photo.
+          A few things worth knowing about SnapFix.
         </p>
       </motion.div>
 
