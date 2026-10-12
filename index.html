@@ -74,9 +74,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 /* stage */
 #stage{position:fixed;inset:0;z-index:0;pointer-events:none}
 #stage canvas{display:block;width:100%;height:100%}
-#spot{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;--sx:70%;--sy:45%;
-  background:radial-gradient(ellipse 38vw 46vh at var(--sx) var(--sy), rgba(255,196,120,.13), rgba(255,170,90,.05) 45%, transparent 72%);transition:opacity .4s ease}
-#grain{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+#spot{position:fixed;left:0;top:0;width:76vw;height:92vh;z-index:0;pointer-events:none;opacity:0;will-change:transform;
+  background:radial-gradient(ellipse at center, rgba(255,196,120,.13), rgba(255,170,90,.05) 45%, transparent 72%);transition:opacity .4s ease}
+#grain{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.045;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   background-size:220px 220px}
 #flash{position:fixed;inset:0;z-index:4;background:#fff;opacity:0;pointer-events:none}
@@ -203,12 +203,13 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 }
 
 /* statement */
-.state{background:var(--ink);padding-block:22vh;position:relative}
-.state h2{font-size:clamp(2.6rem,7vw,6.6rem);max-width:12ch}
-.state .cols{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:9vh}
-.state .cols p{color:var(--text-dim);font-size:1.12rem;max-width:30rem}
+.state{background:var(--ink);padding-block:14vh 16vh;position:relative;border-top:1px solid var(--rule)}
+.state-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:48px clamp(40px,6vw,120px);align-items:start}
+.state h2{font-size:clamp(2.6rem,6vw,5.8rem);max-width:11ch}
+.state .cols{display:grid;gap:28px;padding-top:0.6em}
+.state .cols p{color:var(--text-dim);font-size:1.12rem;max-width:32rem}
 .state .cols p b{color:var(--text);font-weight:600}
-@media (max-width:760px){.state .cols{grid-template-columns:1fr;gap:28px}}
+@media (max-width:900px){.state-grid{grid-template-columns:1fr;gap:36px}.state .cols{padding-top:0}}
 
 /* about */
 .about{background:var(--paper);color:var(--text-on-paper);padding-block:16vh;position:relative}
@@ -354,10 +355,12 @@ footer a{text-decoration:none}
   </section>
 
   <section class="state gutter">
-    <h2>One photo in. A clear answer out.</h2>
-    <div class="cols">
-      <p>Most home problems are hard to describe and easy to photograph. SnapFix is built around that. <b>You show it the problem the way you'd show a friend.</b></p>
-      <p>No forms to fill out. No technical terms to guess at. No self-diagnosing from forum threads. The AI does the first, confusing step so you can get straight to the right person.</p>
+    <div class="state-grid">
+      <h2>One photo in. A clear answer out.</h2>
+      <div class="cols">
+        <p>Most home problems are hard to describe and easy to photograph. SnapFix is built around that. <b>You show it the problem the way you'd show a friend.</b></p>
+        <p>No forms to fill out. No technical terms to guess at. No self-diagnosing from forum threads. The AI does the first, confusing step so you can get straight to the right person.</p>
+      </div>
     </div>
   </section>
 
@@ -426,11 +429,11 @@ try{
 }catch(e){ document.documentElement.classList.add('nogl'); }
 
 if(renderer){
-  renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));
+  let dpr=Math.min(devicePixelRatio,1.5); renderer.setPixelRatio(dpr);
   renderer.setClearColor(0x000000,0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.autoUpdate = false;
   $('#stage').appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
@@ -441,7 +444,7 @@ if(renderer){
   camera.position.set(0,0,7.5);
 
   const key = new THREE.DirectionalLight(0xfff1dc, 1.7); key.position.set(3,5,4); scene.add(key);
-  key.castShadow = true; key.shadow.mapSize.set(2048,2048); key.shadow.bias = -0.0005; key.shadow.normalBias = 0.02; key.shadow.radius = 4;
+  key.castShadow = true; key.shadow.mapSize.set(1024,1024); key.shadow.bias = -0.0005; key.shadow.normalBias = 0.02; key.shadow.radius = 4;
   Object.assign(key.shadow.camera, {left:-4, right:4, top:4, bottom:-4, near:0.5, far:30}); key.shadow.camera.updateProjectionMatrix();
   const keyTarget = new THREE.Object3D(); scene.add(keyTarget); key.target = keyTarget;
   const rim = new THREE.DirectionalLight(0xd6e2ff, 2.4); rim.position.set(-4,2.5,-3); scene.add(rim);
@@ -453,7 +456,7 @@ if(renderer){
   const loader = new GLTFLoader();
   const mesh=(g,m,x=0,y=0,z=0,rx=0,ry=0,rz=0)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.rotation.set(rx,ry,rz);return o};
   const M = {
-    water:  new THREE.MeshPhysicalMaterial({color:0xd6f0ff, metalness:0.1, roughness:0.05, transmission:0.4, thickness:0.2, ior:1.33, clearcoat:1, transparent:true, opacity:0.9}),
+    water:  new THREE.MeshPhysicalMaterial({color:0xcfe9ff, metalness:0.15, roughness:0.08, clearcoat:1, clearcoatRoughness:0.05, transparent:true, opacity:0.78}),
     wire:   new THREE.MeshBasicMaterial({color:0xf2b64b, wireframe:true, transparent:true, opacity:0, depthWrite:false}),
   };
 
@@ -482,8 +485,9 @@ if(renderer){
   let dropsMesh, dropData;
   {
     const N=320; dropData=[];
-    dropsMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.02,6,6), M.water, N);
-    for(let i=0;i<N;i++){ const side=i%2?1:-1; dropData.push({t:Math.random(), side, ang:(Math.random()-0.5)*0.35+(side>0?0:0.9), el:(side>0?0.55:0.15)+Math.random()*0.25, sp:2.6+Math.random()*1.4, life:0.6+Math.random()*0.3}); }
+    const sprayM = new THREE.MeshPhysicalMaterial({color:0x8fc4ee, metalness:0.1, roughness:0.1, clearcoat:1, transparent:true, opacity:0.92});
+    dropsMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.03,6,6), sprayM, N);
+    for(let i=0;i<N;i++){ dropData.push({t:Math.random()*2, k:i%2, life:0.55+Math.random()*0.3, p0:new THREE.Vector3(0,99,0), v:new THREE.Vector3()}); }
     sprinkler.add(dropsMesh); sprinkler.userData.spinner=null;
   }
 
@@ -507,10 +511,10 @@ if(renderer){
   });
   // the rest can arrive after the hero is up
   setTimeout(()=>{
-    loadModel(bulb,'bulb.glb', model=>{ model.traverse(c=>{ if(c.isMesh){ const ms=Array.isArray(c.material)?c.material:[c.material]; ms.forEach(m=>{ if(m.emissiveMap||m.emissive&&(m.emissive.r+m.emissive.g+m.emissive.b)>0) bulb.userData.emissive.push(m); }); }}); });
+    loadModel(bulb,'bulb.glb', model=>{ model.traverse(c=>{ if(c.isMesh){ const ms=Array.isArray(c.material)?c.material:[c.material]; ms.forEach(m=>{ if(m.emissiveMap||m.emissive&&(m.emissive.r+m.emissive.g+m.emissive.b)>0) bulb.userData.emissive.push(m); if(m.transmission>0){ m.transmission=0; m.transparent=true; m.opacity=0.42; m.roughness=Math.min(m.roughness,0.08); m.depthWrite=false; m.needsUpdate=true; } }); }}); registerMats(bulb, model); });
     const floorFor=(group, pad)=>{ const bb=new THREE.Box3().setFromObject(group.userData.model); const f=new THREE.Mesh(new THREE.PlaneGeometry(7,7), new THREE.ShadowMaterial({opacity:0.28, transparent:true})); f.rotation.x=-Math.PI/2; f.position.y=bb.min.y-group.position.y+pad; f.receiveShadow=true; f.renderOrder=-1; group.add(f); };
     loadModel(fence,'fence.glb', ()=>floorFor(fence,0.0));
-    loadModel(sprinkler,'sprinkler.glb', model=>{ sprinkler.userData.spinner = model.getObjectByName('garden_sprinkler_01_spinner') || null; floorFor(sprinkler,0.0); });
+    loadModel(sprinkler,'sprinkler.glb', model=>{ sprinkler.userData.spinner = model.getObjectByName('garden_sprinkler_01_spinner') || null; sprinkler.userData.nozzles=[model.getObjectByName('garden_sprinkler_01_nozel_left'), model.getObjectByName('garden_sprinkler_01_nozel_right')].filter(Boolean); floorFor(sprinkler,0.0); });
   }, 600);
 
 
@@ -588,14 +592,18 @@ if(renderer){
     // page background (daylight for covers)
     const wantPaper = inCov && covR.top < H*0.5 && !afterCov ? 1 : 0;
     bgT = lerp(bgT, wantPaper, k*0.9);
-    document.body.style.backgroundColor = '#'+bgDark.clone().lerp(bgPaper, bgT).getHexString();
+    { const hex='#'+bgDark.clone().lerp(bgPaper, bgT).getHexString(); if(hex!==frame.lastBg){ frame.lastBg=hex; document.body.style.backgroundColor=hex; } }
     renderer.toneMappingExposure = lerp(1.0, 1.15, bgT);
     fill.intensity = lerp(0.08, 0.55, bgT);
     key.intensity = lerp(1.7, 2.3, bgT);
     rim.intensity = lerp(2.4, 1.2, bgT);
     keyTarget.position.copy(rig.position); key.position.set(rig.position.x+3, rig.position.y+5, 4);
     // light pool behind the object
-    { v.set(0,0,0); rig.localToWorld(v); v.project(camera); const sx=(v.x*0.5+0.5)*100, sy=(-v.y*0.5+0.5)*100; spot.style.setProperty('--sx', sx+'%'); spot.style.setProperty('--sy', sy+'%'); spot.style.opacity = (1-bgT)*0.9; }
+    { v.set(0,0,0); rig.localToWorld(v); v.project(camera); const sx=Math.round((v.x*0.5+0.5)*W), sy=Math.round((-v.y*0.5+0.5)*H);
+      if(Math.abs(sx-(frame.sx||0))>2||Math.abs(sy-(frame.sy||0))>2){ frame.sx=sx; frame.sy=sy; spot.style.transform=`translate3d(${sx-0.38*W}px, ${sy-0.46*H}px, 0)`; }
+      const so=((1-bgT)*0.9).toFixed(2); if(so!==frame.so){ frame.so=so; spot.style.opacity=so; } }
+    // shadows only matter in the daylight section
+    renderer.shadowMap.needsUpdate = inCov && !afterCov;
 
     // object visibility
     let target=[0,0,0,0];
@@ -641,15 +649,31 @@ if(renderer){
       bulb.rotation.z = Math.sin(t*0.8)*0.04;
     }
     // sprinkler water
-    if(sprinkler.visible){
-      const d=new THREE.Object3D(); const g=9.8; const ox=0.15, oy=-0.42, oz=0.05;
+    if(sprinkler.visible && sprinkler.userData.nozzles){
+      const d=new THREE.Object3D(); const g=9.8; const nz=sprinkler.userData.nozzles;
       if(sprinkler.userData.spinner && !reduce) sprinkler.userData.spinner.rotation.y += dt*0.9;
+      sprinkler.updateMatrixWorld(true);
+      // nozzle tips and directions in the sprinkler's own space (the tip is at local +Y 0.048 in each nozzle mesh)
+      const tips=[], dirs=[]; const q=new THREE.Quaternion(), qi=new THREE.Quaternion();
+      sprinkler.getWorldQuaternion(qi).invert();
+      nz.forEach(n=>{ const t=new THREE.Vector3(0,0.048,0); n.localToWorld(t); sprinkler.worldToLocal(t); tips.push(t);
+        const dd=new THREE.Vector3(0,1,0).applyQuaternion(n.getWorldQuaternion(q)).applyQuaternion(qi).normalize(); dirs.push(dd); });
+      const floorY = -1.25-sprinkler.position.y+0.02;
       for(let i=0;i<dropData.length;i++){
-        const p=dropData[i]; if(!reduce) p.t+=dt/p.life; if(p.t>1) p.t-=1;
-        const tt=p.t*p.life, vh=Math.cos(p.el)*p.sp, vy=Math.sin(p.el)*p.sp;
-        const dir=p.ang + (p.side>0?0:Math.PI) - 0.5;
-        const x=ox+p.side*0.45*Math.cos(0.5)+vh*tt*Math.cos(dir), z=oz+vh*tt*Math.sin(dir), y=oy+vy*tt-0.5*g*tt*tt;
-        d.position.set(x,Math.max(y,-1.22),z); d.scale.setScalar(y<-1.18?0.001:1+tt*0.5); d.updateMatrix(); dropsMesh.setMatrixAt(i,d.matrix);
+        const p=dropData[i]; if(!reduce) p.t+=dt/p.life;
+        if(p.t>1 || p.p0.y>50){
+          p.t = p.p0.y>50 ? Math.random() : 0;
+          const k=p.k % tips.length, broken = (k===0);
+          const spread = broken ? 0.55 : 0.12, sp = broken ? 1.6+Math.random()*1.2 : 2.4+Math.random()*1.2;
+          p.p0.copy(tips[k]);
+          p.v.copy(dirs[k]).multiplyScalar(sp);
+          p.v.x += (Math.random()-0.5)*spread*sp; p.v.z += (Math.random()-0.5)*spread*sp; p.v.y += (Math.random()-0.5)*spread*sp*0.6;
+          if(broken) p.v.y *= 0.35; // the knocked nozzle sprays low and sideways
+        }
+        const tt=p.t*p.life;
+        const x=p.p0.x+p.v.x*tt, z=p.p0.z+p.v.z*tt, y=p.p0.y+p.v.y*tt-0.5*g*tt*tt;
+        const landed = y<floorY;
+        d.position.set(x, landed?floorY:y, z); const sc=landed?0.001:0.7+tt*0.9; d.scale.set(sc,sc*0.8,sc); d.updateMatrix(); dropsMesh.setMatrixAt(i,d.matrix);
       }
       dropsMesh.instanceMatrix.needsUpdate=true;
     }
@@ -657,7 +681,7 @@ if(renderer){
     /* ---- how-it-works overlays ---- */
     const active = inHow ? clamp(Math.floor(S.p1*3),0,2) : -1;
     steps.forEach((s,i)=>s.classList.toggle('on', inHow && i===active));
-    rails.forEach((r,i)=>r.style.setProperty('--f', clamp(S.p1*3-i,0,1)));
+    if(inHow) rails.forEach((r,i)=>r.style.setProperty('--f', clamp(S.p1*3-i,0,1)));
     result.classList.toggle('on', inHow && S.p1>0.7); how.firstElementChild.classList.toggle('answer', inHow && S.p1>0.7);
 
     if(inHow && pipe.visible && pipe.userData.model){
@@ -689,7 +713,10 @@ if(renderer){
     covItems.forEach((li,i)=>li.classList.toggle('on', inCov && i===covIdx));
     if(inCov && covcap.dataset.i!==String(covIdx)){ covcap.dataset.i=String(covIdx); covcap.textContent=covCaps[covIdx]; }
 
-    renderer.render(scene,camera);
+    const anyVisible = objects.some(o=>o.visible);
+    if(anyVisible){ renderer.render(scene,camera); }
+    // adaptive resolution: if frames are slow for a while, drop to 1x
+    { const ft=now-(frame.prev||now); frame.prev=now; frame.slow=(frame.slow||0)*0.9+(ft>26?1:0)*0.1; if(frame.slow>0.6 && dpr>1){ dpr=1; renderer.setPixelRatio(dpr); frame.slow=0; } }
     if(!document.hidden) requestAnimationFrame(frame);
   }
   document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ frame.last=undefined; requestAnimationFrame(frame);} });
