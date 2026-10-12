@@ -16,33 +16,33 @@ export function Navbar() {
     <motion.header
       initial={{ y: -24, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className="sticky top-0 z-50 w-full border-b border-border/70 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
       <div className="container-page flex h-16 items-center justify-between">
-        <a href="#" className="flex items-center gap-2 font-bold text-lg">
+        <a href="#" className="flex items-center gap-2 text-lg font-bold">
           <span className="grid h-9 w-9 place-items-center rounded-md bg-primary text-primary-fg shadow-subtle">
             <Camera className="h-5 w-5" strokeWidth={2.4} />
           </span>
           <span className="tracking-tight">SnapFix</span>
         </a>
 
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden items-center gap-8 md:flex">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className="text-sm text-muted hover:text-foreground transition-colors"
+              className="text-sm text-muted transition-colors hover:text-foreground"
             >
               {l.label}
             </a>
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex">
           <a
             href="#features"
-            className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-fg shadow-medium transition-transform duration-150 hover:scale-[1.02]"
+            className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-primary-fg shadow-medium hover:-translate-y-0.5"
           >
             See how it works
           </a>
@@ -50,7 +50,7 @@ export function Navbar() {
 
         <button
           aria-label="Toggle menu"
-          className="md:hidden grid h-10 w-10 place-items-center rounded-md border border-border"
+          className="grid h-10 w-10 place-items-center rounded-md border border-border md:hidden"
           onClick={() => setOpen((s) => !s)}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -64,9 +64,9 @@ export function Navbar() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden overflow-hidden border-t border-border bg-surface"
+            className="overflow-hidden border-t border-border bg-surface md:hidden"
           >
-            <div className="container-page py-4 flex flex-col gap-3">
+            <div className="container-page flex flex-col gap-3 py-4">
               {links.map((l) => (
                 <a
                   key={l.href}

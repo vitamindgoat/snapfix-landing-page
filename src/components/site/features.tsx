@@ -1,101 +1,111 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Camera, Sparkles, CalendarCheck, type LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Camera, Sparkles, Wrench, ArrowRight, type LucideIcon } from "lucide-react";
 
-type Feature = {
-  icon: LucideIcon;
-  title: string;
-  body: string;
-  accent: "primary" | "secondary" | "success";
-};
+type Step = { n: string; icon: LucideIcon; title: string; body: string };
 
-const features: Feature[] = [
+const steps: Step[] = [
   {
+    n: "01",
     icon: Camera,
-    title: "Snap it",
-    body: "Point, shoot, done. One photo of the leak, crack, or mess — no forms, no jargon, no diagnosing on your own.",
-    accent: "primary",
+    title: "Snap a photo",
+    body: "Point your camera at the leak, crack, or mess. No forms, no trying to describe it in words.",
   },
   {
+    n: "02",
     icon: Sparkles,
     title: "AI identifies it",
-    body: "Our model spots the problem, classifies severity, and pulls the right specialist trade in seconds.",
-    accent: "secondary",
+    body: "SnapFix looks at the photo, works out what the problem is, and which kind of pro handles it.",
   },
   {
-    icon: CalendarCheck,
-    title: "Book a local pro",
-    body: "Compare vetted pros nearby — ratings, fixed quotes, next-day slots. Tap once to book.",
-    accent: "success",
+    n: "03",
+    icon: Wrench,
+    title: "Find a local pro",
+    body: "Get pointed to the right trade near you, so you know exactly who to call to get it fixed.",
   },
 ];
 
-const accentMap: Record<Feature["accent"], string> = {
-  primary: "bg-primary/10 text-primary",
-  secondary: "bg-secondary/10 text-secondary",
-  success: "bg-success/10 text-success",
-};
-
 export function Features() {
   return (
-    <section id="features" className="container-page py-16 md:py-24">
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="max-w-2xl"
-      >
-        <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-          How it works
-        </span>
-        <h2 className="mt-4 text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-          From photo to fixed in three taps.
-        </h2>
-        <p className="mt-3 text-muted text-base md:text-lg">
-          Skip the back-and-forth. SnapFix handles diagnosis, matching, and
-          booking — you just confirm.
-        </p>
-      </motion.div>
+    <>
+      <section id="features" className="container-page py-20 md:py-28">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-2xl"
+        >
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight text-foreground">
+            From a photo to a plan, in three steps.
+          </h2>
+          <p className="mt-4 text-lg text-muted">
+            SnapFix handles the confusing part: figuring out what is wrong and
+            who can fix it.
+          </p>
+        </motion.div>
 
-      <div className="mt-12 grid gap-6 md:grid-cols-3">
-        {features.map((f, i) => (
-          <motion.div
-            key={f.title}
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{
-              duration: 0.5,
-              delay: i * 0.08,
-              ease: "easeOut",
-            }}
-            whileHover={{ y: -4, scale: 1.02 }}
-            className="group rounded-lg border border-border bg-surface p-6 shadow-subtle transition-shadow hover:shadow-medium"
-          >
-            <div
-              className={cn(
-                "grid h-12 w-12 place-items-center rounded-md",
-                accentMap[f.accent],
-              )}
+        <div className="mt-14 grid gap-5 md:grid-cols-3">
+          {steps.map((s, i) => (
+            <motion.div
+              key={s.n}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.5, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="group relative overflow-hidden rounded-lg border border-border bg-surface p-7 shadow-subtle transition-shadow duration-300 hover:shadow-strong"
             >
-              <f.icon className="h-6 w-6" strokeWidth={2.2} />
-            </div>
-            <div className="mt-5 flex items-center gap-3">
-              <span className="text-xs font-semibold text-muted">
-                0{i + 1}
+              <span className="pointer-events-none absolute -right-2 -top-5 select-none text-[96px] font-bold leading-none text-[#F3E7D7]">
+                {s.n}
               </span>
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <h3 className="mt-3 text-xl font-semibold tracking-tight">
-              {f.title}
-            </h3>
-            <p className="mt-2 text-sm text-muted leading-relaxed">{f.body}</p>
-          </motion.div>
-        ))}
-      </div>
-    </section>
+              <span className="relative grid h-14 w-14 place-items-center rounded-md bg-primary text-primary-fg shadow-medium">
+                <s.icon className="h-7 w-7" strokeWidth={2.2} />
+              </span>
+              <h3 className="relative mt-6 text-xl font-bold tracking-tight text-foreground">
+                {s.title}
+              </h3>
+              <p className="relative mt-2 leading-relaxed text-muted">{s.body}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Highlight band */}
+      <section className="container-page pb-20 md:pb-28">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="relative overflow-hidden rounded-lg bg-[#1A1A1A] px-8 py-14 shadow-strong md:px-16 md:py-20"
+        >
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(62% 130% at 100% 0%, rgba(232,93,4,0.38), transparent 60%)",
+            }}
+          />
+          <div className="relative max-w-2xl">
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight text-[#FFF8F0]">
+              Built around an AI that actually sees the problem.
+            </h2>
+            <p className="mt-4 text-lg text-white/70">
+              SnapFix is powered by a vision model that reads your photo, so you
+              can skip the guesswork and the back-and-forth.
+            </p>
+            <a
+              href="#faq"
+              className="mt-8 inline-flex h-12 items-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-fg shadow-medium hover:-translate-y-0.5"
+            >
+              Learn more
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </div>
+        </motion.div>
+      </section>
+    </>
   );
 }

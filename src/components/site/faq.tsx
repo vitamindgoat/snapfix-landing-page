@@ -32,23 +32,23 @@ export function FAQ() {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="container-page py-16 md:py-24">
+    <section id="faq" className="container-page py-20 md:py-28">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="mx-auto max-w-2xl text-center"
       >
-        <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+        <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
           Questions, answered.
         </h2>
-        <p className="mt-3 text-muted text-base md:text-lg">
+        <p className="mt-4 text-lg text-muted">
           A few things worth knowing about SnapFix.
         </p>
       </motion.div>
 
-      <div className="mx-auto mt-12 max-w-3xl divide-y divide-border rounded-lg border border-border bg-surface shadow-subtle">
+      <div className="mx-auto mt-12 max-w-3xl overflow-hidden rounded-lg border border-border bg-surface shadow-subtle divide-y divide-border">
         {faqs.map((f, i) => {
           const open = openIdx === i;
           return (
@@ -57,20 +57,25 @@ export function FAQ() {
                 type="button"
                 onClick={() => setOpenIdx(open ? null : i)}
                 aria-expanded={open}
-                className="flex w-full items-center justify-between gap-6 px-6 py-5 text-left transition-colors hover:bg-background"
+                className={cn(
+                  "flex w-full items-center justify-between gap-6 px-6 py-5 text-left transition-colors md:px-8",
+                  open ? "bg-background" : "hover:bg-background",
+                )}
               >
-                <span className="text-base md:text-lg font-semibold text-foreground">
+                <span className="text-lg font-bold tracking-tight text-foreground">
                   {f.q}
                 </span>
                 <motion.span
                   animate={{ rotate: open ? 45 : 0 }}
                   transition={{ duration: 0.2 }}
                   className={cn(
-                    "grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border bg-background text-foreground",
-                    open && "border-primary text-primary",
+                    "grid h-9 w-9 shrink-0 place-items-center rounded-md border transition-colors",
+                    open
+                      ? "border-primary bg-primary text-primary-fg"
+                      : "border-border bg-background text-foreground",
                   )}
                 >
-                  <Plus className="h-4 w-4" strokeWidth={2.4} />
+                  <Plus className="h-4 w-4" strokeWidth={2.6} />
                 </motion.span>
               </button>
               <AnimatePresence initial={false}>
@@ -80,10 +85,10 @@ export function FAQ() {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                     className="overflow-hidden"
                   >
-                    <p className="px-6 pb-6 text-sm md:text-base text-muted leading-relaxed">
+                    <p className="px-6 pb-6 text-base leading-relaxed text-muted md:px-8">
                       {f.a}
                     </p>
                   </motion.div>
