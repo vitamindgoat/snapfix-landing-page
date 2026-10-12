@@ -1,31 +1,43 @@
-# SnapFix (Landing Page)
+# SnapFix landing page
 
-The landing page for SnapFix, an AI home-help app. Take a photo of a household problem, like a leaking pipe, a broken fence, or an overgrown lawn, and SnapFix identifies the issue and matches you with qualified local pros.
+The public page for SnapFix, an AI app I'm building. Take a photo of what broke at home, and SnapFix tells you what it is and which kind of local pro fixes it. The app is in active development and isn't released yet; the site says so.
 
 **[View the live site](https://snapfix-dun.vercel.app)**
 
-## About
+## What's on the page
 
-I designed and built this landing page from scratch as the front end for SnapFix. The goal was a clean, mobile-first page that explains the product in a few seconds: snap the problem, fix the problem.
+- A cinematic, scroll-driven 3D scene built with Three.js: a dripping copper pipe that gets framed, scanned and diagnosed as you scroll, then a flickering bulb, a broken fence and a sprinkler for the "what it covers" section.
+- Honest copy. No fake reviews, user counts or store badges.
+- Privacy and terms pages, a 404 page, Open Graph image, favicons, robots.txt and sitemap.
 
-## Built with
+## Stack
 
-- Next.js
-- TypeScript
-- Tailwind CSS
+Plain HTML, CSS and JavaScript. No build step.
+
+- `index.html` is the whole landing page (styles and script inline).
+- `assets/vendor/three/` holds Three.js r160 (MIT) so the page doesn't depend on a CDN.
+- `assets/fonts/` holds Bricolage Grotesque and Schibsted Grotesk (OFL), self-hosted so no requests go to Google Fonts.
+- `vercel.json` sets clean URLs (`/privacy` instead of `/privacy.html`), security headers and long cache times for assets.
 
 ## Run it locally
 
+Any static server works, for example:
+
 ```
-npm install
-npm run dev
+python3 -m http.server 8000
 ```
 
-Then open `http://localhost:3000`.
+Then open `http://localhost:8000`. The 3D scene needs WebGL; the text still reads fine without it.
+
+## Editing
+
+- Copy lives in `index.html`. The site URL used for canonical links, the sitemap and the social preview is `https://snapfix-dun.vercel.app`; search for it and replace it if the domain changes.
+- The social preview image is `assets/og.png` (1200×630).
+- Colors and fonts are CSS variables at the top of the `<style>` block in `index.html`.
 
 ## License
 
-MIT. See the `LICENSE` file for details.
+The code is MIT, see `LICENSE`. The Three.js and font licenses are in their folders under `assets/`. The SnapFix name and the product copy are not covered by the MIT license.
 
 ---
 

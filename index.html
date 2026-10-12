@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SnapFix</title>
+<meta name="description" content="SnapFix is an AI app in development: take a photo of what broke at home and it tells you what it is and which kind of local pro fixes it.">
+<link rel="canonical" href="https://snapfix-dun.vercel.app/">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SnapFix">
+<meta property="og:url" content="https://snapfix-dun.vercel.app/">
+<meta property="og:title" content="SnapFix: take a photo, know who to call">
+<meta property="og:description" content="An AI app in development that reads a photo of a home problem and points you to the right kind of local pro.">
+<meta property="og:image" content="https://snapfix-dun.vercel.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A copper pipe with a dripping fitting next to the words Take a photo. Know who to call.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SnapFix: take a photo, know who to call">
+<meta name="twitter:description" content="An AI app in development that reads a photo of a home problem and points you to the right kind of local pro.">
+<meta name="twitter:image" content="https://snapfix-dun.vercel.app/assets/og.png">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<link rel="preload" href="assets/fonts/bricolage-grotesque-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"SnapFix","applicationCategory":"UtilitiesApplication","operatingSystem":"iOS, Android","description":"An AI app in development that reads a photo of a home problem and points you to the right kind of local pro.","url":"https://snapfix-dun.vercel.app/","author":{"@type":"Person","name":"Oleksandr Rybitskyi","url":"https://github.com/vitamindgoat"}}
+</script>
+<style>
+@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-display:swap;font-weight:200 800;font-stretch:75% 100%;src:url(assets/fonts/bricolage-grotesque-latin-standard-normal.woff2) format("woff2-variations")}
+@font-face{font-family:"Schibsted Grotesk";font-style:normal;font-display:swap;font-weight:400 900;src:url(assets/fonts/schibsted-grotesk-latin-wght-normal.woff2) format("woff2-variations")}
+/* Layout: one fixed 3D stage behind everything; copy scrolls over it, two pinned sequences drive the scene. Left-aligned type, object on the right. */
+:root{
+  color-scheme: dark;
+  --ink:#000000;          /* stage black, like a darkened room */
+  --paper:#ECE9E3;        /* stone, for the daylight section */
+  --text:#F3F0EA;         /* warm white */
+  --text-dim:#9D9890;     /* warm grey, hue-biased toward amber */
+  --text-on-paper:#141311;
+  --dim-on-paper:#6B665E;
+  --focus:#F2B64B;        /* camera focus-box amber, the one accent */
+  --copper:#B46A3A;
+  --rule:rgba(243,240,234,.14);
+  --rule-paper:rgba(20,19,17,.14);
+  --display:"Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --body:"Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --gutter:clamp(16px, 5vw, 72px);
+}
+html{scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--text);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:-0.03em;line-height:0.98;margin:0;text-wrap:balance}
+p{margin:0}
+a{color:inherit}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+
+.skip{position:fixed;left:16px;top:-60px;z-index:20;background:var(--focus);color:#000;padding:10px 14px;border-radius:6px;font-weight:600;text-decoration:none;transition:top .2s}
+.skip:focus{top:16px}
+/* stage */
+#stage{position:fixed;inset:0;z-index:0;pointer-events:none}
+#stage canvas{display:block;width:100%;height:100%}
+#grain{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-size:220px 220px}
+#flash{position:fixed;inset:0;z-index:4;background:#fff;opacity:0;pointer-events:none}
+
+/* nav */
+.nav{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;
+  padding:18px var(--gutter);mix-blend-mode:difference;color:#fff}
+.mark{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--display);font-weight:700;font-size:1.15rem;letter-spacing:-0.02em}
+.mark i{position:relative;width:16px;height:16px;display:block}
+.mark i::before,.mark i::after{content:"";position:absolute;width:6px;height:6px;border:1.75px solid #fff}
+.mark i::before{left:0;top:0;border-right:0;border-bottom:0}
+.mark i::after{right:0;bottom:0;border-left:0;border-top:0}
+.nav ul{display:flex;gap:28px;list-style:none;margin:0;padding:0;font-size:.95rem}
+.nav ul a{text-decoration:none;opacity:.8}
+.nav ul a:hover{opacity:1}
+.menu-btn{display:none;font-weight:600;font-size:.95rem}
+.menu{position:fixed;inset:0;z-index:9;background:var(--ink);display:grid;align-content:center;padding:0 var(--gutter);gap:8px}
+.menu[hidden]{display:none}
+.menu a{font-family:var(--display);font-weight:600;font-size:2.4rem;letter-spacing:-0.03em;text-decoration:none;padding:10px 0;border-bottom:1px solid var(--rule)}
+.menu .close{position:absolute;top:18px;right:var(--gutter);font-weight:600;padding:8px 0}
+@media (max-width:760px){.nav ul{display:none}.menu-btn{display:block}}
+
+/* shared */
+.wrap{position:relative;z-index:1}
+.gutter{padding-inline:var(--gutter)}
+.measure{max-width:34rem}
+
+/* hero */
+.hero{min-height:92svh;display:grid;align-content:end;padding-block:120px 72px}
+.status{display:inline-flex;align-items:center;gap:9px;font-size:.9rem;color:var(--text-dim);margin-bottom:28px}
+.status b{width:8px;height:8px;background:var(--focus);display:inline-block}
+.hero h1{font-size:clamp(2.8rem, 8.2vw, 7.4rem);max-width:12ch;font-variation-settings:"opsz" 96,"wdth" 95}
+.hero p{margin-top:28px;font-size:clamp(1.05rem,1.4vw,1.3rem);color:var(--text-dim);max-width:30rem}
+.hero .actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:36px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 22px;border-radius:999px;text-decoration:none;font-weight:600;font-size:.98rem;transition:transform .25s ease,background .25s ease}
+.btn:hover{transform:translateY(-1px)}
+.btn-fill{background:var(--text);color:#000}
+.btn-fill:hover{background:#fff}
+.btn-line{border:1px solid var(--rule)}
+.btn-line:hover{border-color:rgba(243,240,234,.4)}
+@media (max-width:760px){.hero{min-height:100svh;align-content:end;padding-bottom:40px}.hero h1{font-size:2.6rem}.hero p{margin-top:18px;font-size:1rem}.hero .actions{margin-top:24px;gap:10px}.btn{padding:12px 18px;font-size:.92rem}}
+
+/* the fall: scroll follows one drop from the pipe to the floor */
+.fall{position:relative;height:280vh}
+.fall .stick{position:sticky;top:0;height:100svh;display:grid;align-content:center}
+.fall p{font-family:var(--display);font-weight:500;font-size:clamp(1.6rem,3.2vw,2.6rem);line-height:1.15;letter-spacing:-0.02em;max-width:22ch;opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease}
+.fall p.on{opacity:1;transform:none}
+.fall p + p{margin-top:1.1em}
+.fall p.l1{color:var(--text)}
+.fall p.l2,.fall p.l3{color:var(--text-dim)}
+@media (max-width:760px){.fall .stick{align-content:end;padding-bottom:12svh}.fall p{font-size:1.45rem;max-width:none}}
+
+/* pinned: how it works */
+.pin{position:relative;height:340vh}
+.pin .stick{position:sticky;top:0;height:100svh;display:grid;grid-template-columns:minmax(0,42%) 1fr;align-items:center}
+.steps{position:relative;height:60svh}
+.step{position:absolute;inset:0;display:grid;align-content:center;opacity:0;transform:translateY(12px);transition:opacity .35s ease,transform .35s ease}
+.step.on{opacity:1;transform:none}
+.step .n{font-family:var(--display);font-weight:500;font-size:1rem;color:var(--focus);font-variant-numeric:tabular-nums;margin-bottom:18px}
+.step h2{font-size:clamp(2.2rem,4.6vw,4.2rem)}
+.step p{margin-top:20px;color:var(--text-dim);font-size:1.08rem;max-width:26rem}
+.rail{position:absolute;left:var(--gutter);bottom:7svh;display:flex;gap:8px}
+.rail span{width:28px;height:2px;background:var(--rule);position:relative;overflow:hidden}
+.rail span::after{content:"";position:absolute;inset:0;background:var(--focus);transform:scaleX(var(--f,0));transform-origin:left}
+
+/* viewfinder, scan, labels, result */
+.vf{position:fixed;z-index:2;pointer-events:none;opacity:0}
+.vf i{position:absolute;width:26px;height:26px;border:2px solid var(--focus)}
+.vf i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}
+.vf i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+.vf i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}
+.vf i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+.scan{position:fixed;z-index:2;height:1px;background:linear-gradient(90deg,transparent,var(--focus),transparent);opacity:0;pointer-events:none}
+.tag{position:fixed;z-index:2;pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(.9);
+  font-size:.82rem;font-weight:600;background:rgba(0,0,0,.55);border:1px solid var(--focus);color:var(--text);padding:7px 12px;border-radius:4px;white-space:nowrap;backdrop-filter:blur(6px)}
+.tag{left:0;top:0}
+.tag.flip::before{left:auto;right:-7px}
+.tag::before{content:"";position:absolute;left:-7px;top:50%;width:6px;height:6px;margin-top:-3px;background:var(--focus);border-radius:50%}
+.result{position:absolute;right:var(--gutter);bottom:9svh;width:min(360px,calc(100vw - 2*var(--gutter)));
+  background:rgba(10,10,10,.82);border:1px solid var(--rule);border-radius:14px;padding:20px 22px;backdrop-filter:blur(14px);
+  opacity:0;transform:translateY(16px);transition:opacity .4s ease,transform .4s ease}
+.result.on{opacity:1;transform:none}
+.result small{display:block;color:var(--text-dim);font-size:.82rem;margin-bottom:8px}
+.result h3{font-size:1.35rem;letter-spacing:-0.02em;line-height:1.1}
+.result dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:16px 0 0;font-size:.92rem}
+.result dt{color:var(--text-dim)}
+.result dd{margin:0}
+.result dd.who{color:var(--focus);font-weight:700}
+.result .faux{margin-top:16px;padding-top:14px;border-top:1px solid var(--rule);font-weight:600;font-size:.95rem;display:flex;justify-content:space-between}
+.result .faux span:last-child{color:var(--text-dim);font-weight:400}
+
+@media (max-width:760px){
+  .pin .stick{grid-template-columns:1fr;align-content:end;padding-bottom:9svh}
+  .steps{height:38svh}
+  .step h2{font-size:2.1rem}
+  .step p{font-size:1rem}
+  .rail{bottom:3.5svh}
+  .result{left:var(--gutter);right:var(--gutter);bottom:8svh;width:auto;background:rgba(10,10,10,.8)}
+  .stick.answer .step{opacity:0}
+  .result dl{font-size:.88rem}
+}
+
+/* pinned: covers (daylight) */
+.covers{position:relative;height:420vh}
+.covers .stick{position:sticky;top:0;height:100svh;display:grid;grid-template-columns:minmax(0,46%) 1fr;align-items:center;color:var(--text-on-paper)}
+.covers h2{font-size:clamp(1.9rem,3.2vw,2.8rem);color:var(--text-on-paper);font-weight:600;margin-bottom:6vh;max-width:16ch}
+.cov{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule-paper)}
+.cov li{padding:18px 0;border-bottom:1px solid var(--rule-paper);display:grid;grid-template-columns:1fr auto;gap:4px 16px;cursor:pointer;transition:opacity .3s ease}
+.cov li .t{font-family:var(--display);font-size:clamp(1.3rem,2.2vw,1.9rem);font-weight:600;letter-spacing:-0.02em;line-height:1.1}
+.cov li .who{color:var(--dim-on-paper);font-size:.9rem;align-self:center;white-space:nowrap}
+.cov li .ex{grid-column:1 / -1;color:var(--dim-on-paper);font-size:.98rem;max-height:0;overflow:hidden;transition:max-height .4s ease,opacity .3s ease;opacity:0}
+.cov li.on .ex{max-height:4em;opacity:1;margin-top:6px}
+.cov li.on .who{color:var(--text-on-paper);font-weight:600}
+.cov li:not(.on){opacity:.55}
+.cov li:hover{opacity:.75}
+.cov li.on:hover{opacity:1}
+.covers .more{margin-top:28px;color:var(--dim-on-paper);font-size:.95rem}
+@media (max-width:760px){
+  .covers .stick{grid-template-columns:1fr;align-content:end;padding-bottom:7svh}
+  .covers h2{margin-bottom:3vh;font-size:1.5rem}
+  .cov li{padding:12px 0}
+  .cov li .t{font-size:1.25rem}
+  .cov li.on .ex{max-height:5em}
+}
+
+/* statement */
+.state{background:var(--ink);padding-block:22vh;position:relative}
+.state h2{font-size:clamp(2.6rem,7vw,6.6rem);max-width:12ch}
+.state .cols{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:9vh}
+.state .cols p{color:var(--text-dim);font-size:1.12rem;max-width:30rem}
+.state .cols p b{color:var(--text);font-weight:600}
+@media (max-width:760px){.state .cols{grid-template-columns:1fr;gap:28px}}
+
+/* about */
+.about{background:var(--paper);color:var(--text-on-paper);padding-block:16vh;position:relative}
+.about .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:48px;align-items:start}
+.about h2{font-size:clamp(2rem,4.2vw,3.6rem)}
+.about p{color:#3E3A34;font-size:1.1rem;max-width:34rem}
+.about p + p{margin-top:1.1em}
+.about .sig{margin-top:36px;font-family:var(--display);font-weight:600;color:var(--text-on-paper)}
+.about .sig small{display:block;font-family:var(--body);font-weight:400;color:var(--dim-on-paper);font-size:.9rem;margin-top:4px}
+@media (max-width:760px){.about .grid{grid-template-columns:1fr;gap:28px}}
+
+/* footer */
+footer{background:var(--paper);color:var(--dim-on-paper);padding-block:28px 40px;border-top:1px solid var(--rule-paper);font-size:.9rem;position:relative}
+footer .row{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}
+footer .mark{color:var(--text-on-paper)}
+footer .mark i::before,footer .mark i::after{border-color:var(--text-on-paper)}
+footer ul{display:flex;gap:22px;list-style:none;margin:0;padding:0}
+footer a{text-decoration:none}
+
+/* no webgl */
+.nogl #stage,.nogl .vf,.nogl .scan,.nogl .tag{display:none}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .step,.result,.cov li .ex,.btn{transition:none}
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#top">Skip to content</a>
+<div id="stage" aria-hidden="true"></div>
+<div id="grain" aria-hidden="true"></div>
+<div id="flash" aria-hidden="true"></div>
+
+<nav class="nav">
+  <a class="mark" href="#top" aria-label="SnapFix, back to top"><i></i>SnapFix</a>
+  <ul>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#covers">What it covers</a></li>
+    <li><a href="#about">About the project</a></li>
+  </ul>
+  <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menu">Menu</button>
+</nav>
+<div class="menu" id="menu" hidden>
+  <button class="close" id="menuClose">Close</button>
+  <a href="#how">How it works</a>
+  <a href="#covers">What it covers</a>
+  <a href="#about">About the project</a>
+</div>
+
+<main class="wrap" id="top">
+
+  <section class="hero gutter">
+    <div>
+      <div class="status"><b aria-hidden="true"></b>In development. Not released yet.</div>
+      <h1>Take a photo. Know who to call.</h1>
+      <p>SnapFix looks at a photo of what broke at home, tells you what it is, and points you to the kind of local pro who fixes it.</p>
+      <div class="actions">
+        <a class="btn btn-fill" href="#how">See how it works</a>
+        <a class="btn btn-line" href="#about">About the project</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="fall" id="fall" aria-label="The problem">
+    <div class="stick gutter">
+      <div>
+        <p class="l1" id="fl1">A dripping pipe. A cracked fence. A light that flickers.</p>
+        <p class="l2" id="fl2">Most of us can't tell what we're looking at, how bad it is, or who to call.</p>
+        <p class="l3" id="fl3">So we search, guess, describe it badly over the phone, and wait.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="pin" id="how" aria-label="How it works">
+    <div class="stick gutter">
+      <div class="steps">
+        <div class="step" data-step="0">
+          <div class="n">1 of 3</div>
+          <h2>Snap it.</h2>
+          <p>Point your camera at the problem. No forms, no describing it, no searching for the right words.</p>
+        </div>
+        <div class="step" data-step="1">
+          <div class="n">2 of 3</div>
+          <h2>SnapFix reads it.</h2>
+          <p>The AI looks at the photo, works out what the thing is, what's wrong with it, and how urgent it probably is.</p>
+        </div>
+        <div class="step" data-step="2">
+          <div class="n">3 of 3</div>
+          <h2>You know who to call.</h2>
+          <p>You get the trade that handles this kind of job, so your next step is clear.</p>
+        </div>
+      </div>
+      <div class="rail" aria-hidden="true"><span id="r0"></span><span id="r1"></span><span id="r2"></span></div>
+      <aside class="result" id="result" aria-live="polite">
+        <small>Example result</small>
+        <h3>Leaking compression fitting</h3>
+        <dl>
+          <dt>Where</dt><dd>Supply line, under the sink</dd>
+          <dt>Who fixes it</dt><dd class="who">Plumber</dd>
+          <dt>Urgency</dt><dd>Soon. Close the shutoff valve until they arrive.</dd>
+        </dl>
+        <div class="faux"><span>Find a plumber near you</span><span>in the app</span></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="covers" id="covers" aria-label="What it covers">
+    <div class="stick gutter">
+      <div>
+        <h2>Built for the everyday stuff people can't diagnose on their own.</h2>
+        <ul class="cov" id="cov">
+          <li data-i="0"><span class="t">Plumbing</span><span class="who">Plumber</span><span class="ex">Leaks, drips, slow drains, running toilets, low water pressure.</span></li>
+          <li data-i="1"><span class="t">Lights and fixtures</span><span class="who">Electrician</span><span class="ex">Flickering lights, dead outlets, loose fixtures, fans that won't spin.</span></li>
+          <li data-i="2"><span class="t">Fences and gates</span><span class="who">Fence contractor</span><span class="ex">Broken pickets, leaning posts, sagging gates, rot at the base.</span></li>
+          <li data-i="3"><span class="t">Yard and irrigation</span><span class="who">Landscaper</span><span class="ex">Broken sprinkler heads, dead patches, overgrowth, standing water.</span></li>
+        </ul>
+        <p class="more">Plus similar everyday repairs where the hard part is knowing what you're looking at.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="state gutter">
+    <h2>One photo in. A clear answer out.</h2>
+    <div class="cols">
+      <p>Most home problems are hard to describe and easy to photograph. SnapFix is built around that. <b>You show it the problem the way you'd show a friend.</b></p>
+      <p>No forms to fill out. No technical terms to guess at. No self-diagnosing from forum threads. The AI does the first, confusing step so you can get straight to the right person.</p>
+    </div>
+  </section>
+
+  <section class="about gutter" id="about">
+    <div class="grid">
+      <h2>Built by one person. Still being built.</h2>
+      <div>
+        <p>SnapFix is my own project, and it's in active development. Parts of it work today and parts are still being improved. There's no download yet, no user count to show you, and no reviews, because it hasn't launched.</p>
+        <p>What's on this page is what the app is designed to do. When it's ready, this is where you'll find it.</p>
+        <div class="sig">Oleksandr Rybitskyi<small>Making SnapFix, 2026</small></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="gutter">
+    <div class="row">
+      <a class="mark" href="#top"><i></i>SnapFix</a>
+      <ul>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#covers">What it covers</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="privacy">Privacy</a></li>
+        <li><a href="terms">Terms</a></li>
+      </ul>
+      <span>© 2026 Oleksandr Rybitskyi</span>
+    </div>
+  </footer>
+</main>
+
+<div class="vf" id="vf" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<div class="scan" id="scan" aria-hidden="true"></div>
+<div class="tag" id="tag0" aria-hidden="true">Compression fitting</div>
+<div class="tag" id="tag1" aria-hidden="true">Active drip</div>
+<div class="tag" id="tag2" aria-hidden="true">Copper, ½ in</div>
+
+<script type="importmap">
+{"imports":{"three":"./assets/vendor/three/three.module.min.js","three/addons/environments/RoomEnvironment.js":"./assets/vendor/three/RoomEnvironment.js"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = s => document.querySelector(s);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp = (a,b,t)=>a+(b-a)*t;
+const smooth = (a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)};
+const env = (x,a,b,c,d)=>smooth(a,b,x)*(1-smooth(c,d,x)); // rise a→b, fall c→d
+
+/* ---------- renderer ---------- */
+let renderer;
+try{
+  renderer = new THREE.WebGLRenderer({antialias:true, alpha:true, powerPreference:'high-performance'});
+}catch(e){ document.documentElement.classList.add('nogl'); }
+
+if(renderer){
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));
+  renderer.setClearColor(0x000000,0);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  $('#stage').appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+  camera.position.set(0,0,7.5);
+
+  const key = new THREE.DirectionalLight(0xfff1dc, 2.6); key.position.set(3,4,5); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xcfd8ff, 1.6); rim.position.set(-4,2,-3); scene.add(rim);
+  const fill = new THREE.AmbientLight(0xffffff, 0.12); scene.add(fill);
+
+  const rig = new THREE.Group(); scene.add(rig);
+
+  /* materials */
+  const M = {
+    copper: new THREE.MeshStandardMaterial({color:0xb46a3a, metalness:0.92, roughness:0.32, envMapIntensity:1.1}),
+    brass:  new THREE.MeshStandardMaterial({color:0xc9a24a, metalness:0.95, roughness:0.28, envMapIntensity:1.1}),
+    chrome: new THREE.MeshStandardMaterial({color:0xd3d7db, metalness:0.6, roughness:0.3, envMapIntensity:1.3}),
+    water:  new THREE.MeshPhysicalMaterial({color:0xd6f0ff, metalness:0.1, roughness:0.05, transmission:0.4, thickness:0.2, ior:1.33, clearcoat:1, transparent:true, opacity:0.9}),
+    glass:  new THREE.MeshPhysicalMaterial({color:0xffffff, metalness:0, roughness:0.05, transmission:0.95, thickness:0.08, ior:1.5, transparent:true, opacity:0.9}),
+    bronze: new THREE.MeshStandardMaterial({color:0x3a2e24, metalness:0.7, roughness:0.5}),
+    cord:   new THREE.MeshStandardMaterial({color:0x1a1a1a, roughness:0.9}),
+    fil:    new THREE.MeshStandardMaterial({color:0xffb25a, emissive:0xff9a2a, emissiveIntensity:3, roughness:0.4}),
+    plastic:new THREE.MeshStandardMaterial({color:0x2c2c2c, roughness:0.6, metalness:0.05}),
+    grass:  new THREE.MeshStandardMaterial({color:0x3b6b35, roughness:1}),
+    soil:   new THREE.MeshStandardMaterial({color:0x4a3a2b, roughness:1}),
+    wire:   new THREE.MeshBasicMaterial({color:0xf2b64b, wireframe:true, transparent:true, opacity:0, depthWrite:false}),
+  };
+  const wood = (h)=>new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(0.075,0.38,h), roughness:0.88, metalness:0});
+
+  const mesh=(g,m,x=0,y=0,z=0,rx=0,ry=0,rz=0)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.rotation.set(rx,ry,rz);return o};
+
+  /* ---------- object: copper pipe with a leaking fitting ---------- */
+  const pipe = new THREE.Group();
+  {
+    const R=0.55, T=0.17, cx=-0.55, cy=0.8;
+    pipe.add(mesh(new THREE.CylinderGeometry(T,T,1.9,40), M.copper, cx-0.95, cy+R, 0, 0,0,Math.PI/2));
+    pipe.add(mesh(new THREE.TorusGeometry(R,T,28,40,Math.PI/2), M.copper, cx, cy, 0));
+    pipe.add(mesh(new THREE.CylinderGeometry(T,T,1.3,40), M.copper, cx+R, cy-0.65, 0));
+    pipe.add(mesh(new THREE.CylinderGeometry(0.31,0.31,0.36,6), M.brass, cx+R, -0.68, 0));
+    pipe.add(mesh(new THREE.CylinderGeometry(0.2,0.2,0.08,40), M.brass, cx+R, -0.9, 0));
+    pipe.add(mesh(new THREE.CylinderGeometry(0.19,0.19,0.34,40), M.chrome, cx+R, -1.1, 0));
+    pipe.add(mesh(new THREE.CylinderGeometry(0.42,0.42,0.05,48), M.chrome, cx-1.9, cy+R, 0, 0,0,Math.PI/2)); // wall plate
+    // wireframe overlay (AI "reading")
+    const wires=[]; pipe.children.slice().forEach(c=>{ const w=new THREE.Mesh(c.geometry, M.wire); w.position.copy(c.position); w.rotation.copy(c.rotation); w.scale.setScalar(1.015); w.visible=false; w.renderOrder=2; pipe.add(w); wires.push(w); }); pipe.userData.wires=wires;
+    // drip
+    const drop = mesh(new THREE.SphereGeometry(0.095,24,24), M.water, cx+R, -1.3, 0);
+    drop.scale.set(1,1.35,1); pipe.add(drop); pipe.userData.drop=drop; pipe.userData.dropBase=-1.3;
+    // landing rings for the scroll-driven fall
+    const splash = new THREE.Group(); const ringM = new THREE.MeshBasicMaterial({color:0xf2b64b, transparent:true, opacity:0, side:THREE.DoubleSide, depthWrite:false});
+    for(let i=0;i<3;i++){ const r=mesh(new THREE.RingGeometry(0.22,0.25,64), ringM, 0,0,0, -Math.PI/2,0,0); r.userData.i=i; splash.add(r); }
+    splash.position.set(cx+R, -1.3-7.2, 0); splash.visible=false; pipe.add(splash);
+    pipe.userData.splash=splash; pipe.userData.ringM=ringM; pipe.userData.fallDist=7.2;
+    pipe.userData.anchors = {
+      nut:  new THREE.Vector3(cx+R, -0.68, 0.35),
+      drip: new THREE.Vector3(cx+R, -1.32, 0.1),
+      run:  new THREE.Vector3(cx-0.95, cy+R+0.2, 0.1),
+    };
+    pipe.position.set(1.05,0.05,0);
+  }
+
+  /* ---------- object: pendant bulb that flickers ---------- */
+  const bulb = new THREE.Group();
+  {
+    bulb.add(mesh(new THREE.CylinderGeometry(0.018,0.018,2.4,12), M.cord, 0, 2.3, 0));
+    bulb.add(mesh(new THREE.CylinderGeometry(0.17,0.19,0.42,40), M.bronze, 0, 0.95, 0));
+    bulb.add(mesh(new THREE.CylinderGeometry(0.19,0.3,0.26,40), M.glass, 0, 0.62, 0));
+    bulb.add(mesh(new THREE.SphereGeometry(0.56,48,48), M.glass, 0, 0.05, 0));
+    const fil = new THREE.Group();
+    for(let i=0;i<3;i++){ fil.add(mesh(new THREE.TorusGeometry(0.11,0.012,8,32), M.fil, 0, 0.1 - i*0.09, 0, Math.PI/2,0,0)); }
+    fil.add(mesh(new THREE.CylinderGeometry(0.012,0.012,0.5,8), M.fil, -0.07, 0.3, 0));
+    fil.add(mesh(new THREE.CylinderGeometry(0.012,0.012,0.5,8), M.fil, 0.07, 0.3, 0));
+    bulb.add(fil);
+    const glow = new THREE.PointLight(0xffb25a, 6, 6, 2); glow.position.set(0,0.05,0); bulb.add(glow);
+    bulb.userData.glow = glow; bulb.userData.fil = M.fil;
+    bulb.position.set(0,-0.35,0);
+  }
+
+  /* ---------- object: picket fence with a broken picket ---------- */
+  const fence = new THREE.Group();
+  {
+    const post = new THREE.BoxGeometry(0.16,2.5,0.16);
+    fence.add(mesh(post, wood(0.28), -1.25, -0.15, -0.12));
+    fence.add(mesh(post, wood(0.3), 1.25, -0.15, -0.12));
+    const rail = new THREE.BoxGeometry(2.7,0.1,0.07);
+    fence.add(mesh(rail, wood(0.32), 0, 0.55, -0.06));
+    fence.add(mesh(rail, wood(0.32), 0, -0.6, -0.06));
+    const pk = new THREE.BoxGeometry(0.22,2.0,0.05);
+    const cap = new THREE.ConeGeometry(0.16,0.2,4);
+    for(let i=0;i<6;i++){
+      const x=-1+i*0.4, m=wood(0.33+((i*7)%5)*0.012);
+      if(i===3){
+        const top = new THREE.Group();
+        top.add(mesh(new THREE.BoxGeometry(0.22,0.9,0.05), m, 0, 0.55, 0));
+        top.add(mesh(cap, m, 0, 1.1, 0, 0, Math.PI/4, 0));
+        top.position.set(x,0.0,0); top.rotation.z=-0.22; fence.add(top);
+        const low = mesh(new THREE.BoxGeometry(0.22,1.0,0.05), m, 0,-0.5,0);
+        const g = new THREE.Group(); g.add(low); g.position.set(x-0.05,-0.42,0.08); g.rotation.z=0.42; g.rotation.x=0.25; fence.add(g);
+        continue;
+      }
+      fence.add(mesh(pk, m, x, 0.0, 0));
+      fence.add(mesh(cap, m, x, 1.1, 0, 0, Math.PI/4, 0));
+    }
+    fence.position.set(0,0.1,0);
+    fence.rotation.y = -0.35;
+  }
+
+  /* ---------- object: sprinkler head spraying sideways ---------- */
+  const sprinkler = new THREE.Group();
+  let dropsMesh, dropData;
+  {
+    sprinkler.add(mesh(new THREE.CylinderGeometry(1.25,1.25,0.1,64), M.grass, 0, -1.25, 0));
+    sprinkler.add(mesh(new THREE.CylinderGeometry(1.25,1.25,0.12,64), M.soil, 0, -1.36, 0));
+    // grass blades
+    const blade = new THREE.BoxGeometry(0.03,0.22,0.01);
+    const blades = new THREE.InstancedMesh(blade, M.grass, 420);
+    const d = new THREE.Object3D();
+    for(let i=0;i<420;i++){
+      const a=Math.random()*Math.PI*2, r=Math.sqrt(Math.random())*1.18;
+      d.position.set(Math.cos(a)*r, -1.1+Math.random()*0.05, Math.sin(a)*r);
+      d.rotation.set((Math.random()-0.5)*0.6, Math.random()*Math.PI, (Math.random()-0.5)*0.6);
+      d.scale.set(1,0.6+Math.random()*0.9,1);
+      d.updateMatrix(); blades.setMatrixAt(i,d.matrix);
+    }
+    sprinkler.add(blades);
+    sprinkler.add(mesh(new THREE.CylinderGeometry(0.12,0.13,1.3,32), M.plastic, 0, -0.55, 0));
+    sprinkler.add(mesh(new THREE.CylinderGeometry(0.17,0.15,0.16,32), M.plastic, 0, 0.14, 0));
+    sprinkler.add(mesh(new THREE.CylinderGeometry(0.05,0.07,0.1,16), M.chrome, 0.12, 0.2, 0, 0,0,-1.1));
+    // water
+    const N=260; dropData=[];
+    dropsMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.022,8,8), M.water, N);
+    for(let i=0;i<N;i++){ dropData.push({t:Math.random(), ang:(Math.random()-0.5)*0.5, el:0.35+Math.random()*0.35, sp:3.4+Math.random()*1.6, life:0.75+Math.random()*0.25}); }
+    sprinkler.add(dropsMesh);
+    sprinkler.position.set(0.1,0.3,0);
+  }
+
+  const objects=[pipe,bulb,fence,sprinkler];
+  objects.forEach(o=>{ rig.add(o); o.userData.mats=[]; o.traverse(c=>{ if(c.isMesh && c.material!==M.wire){ o.userData.mats.push(c.material); }}); o.userData.vis=0; });
+  // unique materials list per object for fading
+  objects.forEach(o=>{ o.userData.mats=[...new Set(o.userData.mats)]; o.userData.baseOp = o.userData.mats.map(m=>m.opacity); });
+  function setVis(o,v){
+    o.userData.vis=v; o.visible = v>0.01;
+    const s = 0.82+0.18*v; o.scale.setScalar(s);
+    o.userData.mats.forEach((m,i)=>{ const base=o.userData.baseOp[i]; m.opacity=base*v; m.transparent = v<0.995 || base<1; });
+  }
+
+  /* ---------- scroll + layout ---------- */
+  const how=$('#how'), covers=$('#covers'), hero=$('.hero'), state=$('.state');
+  const steps=[...document.querySelectorAll('.step')], rails=[$('#r0'),$('#r1'),$('#r2')];
+  const result=$('#result'), vf=$('#vf'), scan=$('#scan'), tags=[$('#tag0'),$('#tag1'),$('#tag2')], flash=$('#flash');
+  const covItems=[...document.querySelectorAll('#cov li')];
+  const fall=$('#fall'), fallLines=[$('#fl1'),$('#fl2'),$('#fl3')];
+  let W=innerWidth,H=innerHeight,mobile=W<760;
+  function resize(){ W=innerWidth;H=innerHeight;mobile=W<760; camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H,false); }
+  addEventListener('resize',resize); resize();
+
+  const prog = el=>{ const r=el.getBoundingClientRect(); const total=el.offsetHeight-H; return clamp(-r.top/total,0,1); };
+  const vis = el=>{ const r=el.getBoundingClientRect(); return clamp(1 - Math.max(0,-r.bottom)/ (H*0.6), 0, 1); };
+
+  let mx=0,my=0; addEventListener('pointermove',e=>{ mx=(e.clientX/W-0.5); my=(e.clientY/H-0.5); },{passive:true});
+
+  // smoothed state
+  const S = {p1:0,p2:0,camz:7.5,ox:0,oy:0,camy:0};
+  let covIdx=0, lastFlash=false, pageTone=0, bgT=0;
+  const bgDark=new THREE.Color('#000000'), bgPaper=new THREE.Color('#ECE9E3');
+
+  const box = new THREE.Box3(), corners=Array.from({length:8},()=>new THREE.Vector3()), v=new THREE.Vector3();
+  function screenBox(o){
+    box.setFromObject(o);
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    for(let i=0;i<8;i++){
+      corners[i].set(i&1?box.max.x:box.min.x, i&2?box.max.y:box.min.y, i&4?box.max.z:box.min.z).project(camera);
+      const sx=(corners[i].x*0.5+0.5)*W, sy=(-corners[i].y*0.5+0.5)*H;
+      x0=Math.min(x0,sx);y0=Math.min(y0,sy);x1=Math.max(x1,sx);y1=Math.max(y1,sy);
+    }
+    return {x0,y0,x1,y1};
+  }
+  function project(local, o){ v.copy(local); o.localToWorld(v); v.project(camera); return {x:(v.x*0.5+0.5)*W, y:(-v.y*0.5+0.5)*H}; }
+
+  let t0=performance.now(), introStart=t0;
+  function frame(now){
+    const t=(now-t0)/1000, dt=Math.min(0.05,(now-(frame.last||now))/1000); frame.last=now;
+    const intro = reduce?1:smooth(0.1,1.9,(now-introStart)/1000);
+
+    const p1=prog(how), p2=prog(covers), pf=prog(fall);
+    const k = reduce?1:1-Math.pow(0.001,dt); // smoothing
+    S.p1=lerp(S.p1,p1,k); S.p2=lerp(S.p2,p2,k);
+    const fallR=fall.getBoundingClientRect();
+    const inFall = fallR.top<H && fallR.bottom>0;
+
+    // which section owns the stage
+    const howR=how.getBoundingClientRect(), covR=covers.getBoundingClientRect();
+    const inHow = howR.top<H && howR.bottom>0, inCov = covR.top<H && covR.bottom>0;
+    const heroVis = vis(hero);
+    const afterCov = covR.bottom<=0;
+
+    // layout targets
+    const s3 = inHow ? smooth(0.62,0.8,S.p1) : 0;
+    const tz = mobile ? (inHow? 15 : (inCov?15:15.5)) : (inHow ? lerp(lerp(8.6,7.8,smooth(0,0.3,S.p1)),8.8,s3) : (inCov?8.2:8.6));
+    const tox = mobile ? (inCov?0:0.35) : (inCov ? 2.0 : lerp(1.3,0.9,s3));
+    const toy = mobile ? (inHow? 2.0 : (inCov? 2.3 : 2.2)) : (inCov?0.1:lerp(0,0.75,s3));
+    // the fall: camera rides down with the drop
+    const fd=pipe.userData.fallDist, ff=clamp((pf-0.12)/0.74,0,1), fe=Math.pow(ff,1.6);
+    const tcy = inFall ? -fd*fe : 0;
+    S.camz=lerp(S.camz,tz,k); S.ox=lerp(S.ox,tox,k); S.oy=lerp(S.oy,toy,k); S.camy=lerp(S.camy,tcy,inFall?1:k);
+    camera.position.z=S.camz; camera.position.y=S.camy;
+    rig.position.set(S.ox,S.oy,0);
+    rig.rotation.y = (reduce?0:Math.sin(t*0.25)*0.12) + mx*0.18;
+    rig.rotation.x = my*0.08;
+
+    // page background (daylight for covers)
+    const wantPaper = inCov && covR.top < H*0.5 && !afterCov ? 1 : 0;
+    bgT = lerp(bgT, wantPaper, k*0.9);
+    document.body.style.backgroundColor = '#'+bgDark.clone().lerp(bgPaper, bgT).getHexString();
+    renderer.toneMappingExposure = lerp(1.05, 1.25, bgT);
+    fill.intensity = lerp(0.12, 0.6, bgT);
+    key.intensity = lerp(2.6, 3.2, bgT);
+
+    // object visibility
+    let target=[0,0,0,0];
+    if(inCov && !afterCov){
+      const seg=S.p2*4; covIdx=clamp(Math.floor(seg),0,3);
+      for(let i=0;i<4;i++){ const d=Math.abs(seg-(i+0.5)); target[i]=clamp(1-(d-0.3)/0.22,0,1); }
+      // keep pipe during transition from how → covers
+      if(covR.top>0){ target[0]=Math.max(target[0], smooth(0, H, covR.top)); }
+    } else if(afterCov){
+      target=[0,0,0,0];
+    } else {
+      target[0]=1;
+    }
+    const kv = reduce?1:1-Math.pow(0.00005,dt);
+    objects.forEach((o,i)=>setVis(o, lerp(o.userData.vis, target[i]*intro, kv)));
+
+    // pipe: drip cycle
+    {
+      const drop=pipe.userData.drop, cyc=2.6, u=(t%cyc)/cyc, splash=pipe.userData.splash;
+      if(inFall){
+        // scroll-driven: hang, stretch, fall, land
+        const hang=smooth(0,0.12,pf), land=smooth(0.86,0.9,pf), ring=smooth(0.86,1,pf);
+        drop.position.y=pipe.userData.dropBase - 0.06*hang - fd*fe;
+        const sy = ff>0 && ff<1 ? 1.35+0.5*Math.sin(Math.min(1,ff*3)*Math.PI/2) : 1.35;
+        drop.scale.set(1-0.15*hang, sy, 1-0.15*hang);
+        drop.material.opacity=0.95*(1-land)*pipe.userData.vis;
+        splash.visible = ring>0.001 && ring<0.999;
+        splash.children.forEach(r=>{ const u2=clamp((ring-r.userData.i*0.12)/0.76,0,1); r.scale.setScalar(0.2+u2*5.5); });
+        pipe.userData.ringM.opacity = ring>0 ? 0.9*(1-smooth(0.2,1,ring)) : 0;
+      }
+      else if(reduce){ drop.scale.set(1,1.35,1); drop.position.y=pipe.userData.dropBase; splash.visible=false; }
+      else if(u<0.68){ const g=u/0.68; drop.scale.set(0.3+0.7*g, 0.4+0.95*g, 0.3+0.7*g); drop.position.y=pipe.userData.dropBase-0.02*g; }
+      else { const f=(u-0.68)/0.32; drop.scale.set(0.9,1.6,0.9); drop.position.y=pipe.userData.dropBase-f*f*4.2; drop.material.opacity=0.95*(1-f); }
+      if(!inFall){ splash.visible=false; if(u<0.68) drop.material.opacity=0.95*pipe.userData.vis; }
+      // slow show-off turn in step 3
+      pipe.rotation.y = lerp(0, -0.35, smooth(0.66,0.95,S.p1)) * (inHow?1:0);
+    }
+    // bulb flicker
+    {
+      const fl = reduce?1: (Math.sin(t*23)*0.5+0.5)*(Math.sin(t*7.3)>0.6?0.15:1)*(Math.random()>0.97?0.2:1);
+      bulb.userData.glow.intensity = 6*fl*bulb.userData.vis;
+      bulb.userData.fil.emissiveIntensity = 0.8+2.6*fl;
+      bulb.rotation.z = Math.sin(t*0.8)*0.04;
+    }
+    // sprinkler water
+    if(sprinkler.visible){
+      const d=new THREE.Object3D(); const g=9.8;
+      for(let i=0;i<dropData.length;i++){
+        const p=dropData[i]; if(!reduce) p.t+=dt/p.life; if(p.t>1) p.t-=1;
+        const tt=p.t*p.life, vx=Math.cos(p.el)*p.sp, vy=Math.sin(p.el)*p.sp;
+        const x=0.12+vx*tt*Math.cos(p.ang), z=vx*tt*Math.sin(p.ang), y=0.2+vy*tt-0.5*g*tt*tt;
+        d.position.set(x,Math.max(y,-1.2),z); d.scale.setScalar(y<-1.15?0.001:1+tt*0.6); d.updateMatrix(); dropsMesh.setMatrixAt(i,d.matrix);
+      }
+      dropsMesh.instanceMatrix.needsUpdate=true;
+    }
+
+    /* ---- how-it-works overlays ---- */
+    const active = inHow ? clamp(Math.floor(S.p1*3),0,2) : -1;
+    steps.forEach((s,i)=>s.classList.toggle('on', inHow && i===active));
+    rails.forEach((r,i)=>r.style.setProperty('--f', clamp(S.p1*3-i,0,1)));
+    result.classList.toggle('on', inHow && S.p1>0.7); how.firstElementChild.classList.toggle('answer', inHow && S.p1>0.7);
+
+    if(inHow && pipe.visible){
+      const b=screenBox(pipe);
+      const cx=(b.x0+b.x1)/2, cy=(b.y0+b.y1)/2, bw=b.x1-b.x0, bh=b.y1-b.y0;
+      // viewfinder: shrinks from loose to snug during step 1
+      const s1=smooth(0.02,0.3,S.p1), vfo=env(S.p1,0.0,0.06,0.33,0.4);
+      const sc=lerp(1.9,1.08,s1), w=bw*sc, h=bh*sc;
+      vf.style.opacity=vfo; vf.style.left=(cx-w/2)+'px'; vf.style.top=(cy-h/2)+'px'; vf.style.width=w+'px'; vf.style.height=h+'px';
+      // shutter
+      const past = S.p1>0.31;
+      if(past && !lastFlash && !reduce){ flash.animate([{opacity:0.85},{opacity:0}],{duration:520,easing:'ease-out'}); }
+      lastFlash=past;
+      // reading: wireframe + scan + tags
+      const rd=env(S.p1,0.34,0.42,0.6,0.68);
+      M.wire.opacity=0.45*rd; pipe.userData.wires.forEach(w=>w.visible=rd>0.01);
+      const sw=smooth(0.36,0.6,S.p1);
+      scan.style.opacity=rd; scan.style.left=(b.x0-20)+'px'; scan.style.width=(bw+40)+'px'; scan.style.top=lerp(b.y0,b.y1,sw)+'px';
+      const A=pipe.userData.anchors, pts=[project(A.nut,pipe),project(A.drip,pipe),project(A.run,pipe)];
+      tags.forEach((el,i)=>{ const o=env(S.p1,0.40+i*0.04,0.46+i*0.04,0.6,0.67); el.style.opacity=o; const tw=el.offsetWidth; let x=pts[i].x+18; if(x+tw>W-12){ x=Math.max(12, pts[i].x-18-tw); el.classList.add('flip'); } else el.classList.remove('flip'); el.style.transform=`translate(${x}px, ${pts[i].y}px) translate(0,-50%) scale(${0.9+0.1*o})`; });
+    } else {
+      vf.style.opacity=0; scan.style.opacity=0; tags.forEach(el=>el.style.opacity=0); M.wire.opacity=0; pipe.userData.wires.forEach(w=>w.visible=false);
+    }
+
+    /* ---- fall text ---- */
+    fallLines.forEach((el,i)=>el.classList.toggle('on', inFall && pf>0.04+i*0.26));
+
+    /* ---- covers list ---- */
+    covItems.forEach((li,i)=>li.classList.toggle('on', inCov && i===covIdx));
+
+    renderer.render(scene,camera);
+    if(!document.hidden) requestAnimationFrame(frame);
+  }
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ frame.last=undefined; requestAnimationFrame(frame);} });
+  requestAnimationFrame(frame);
+
+  // mobile menu
+  const menu=$('#menu'), menuBtn=$('#menuBtn');
+  const setMenu=o=>{ menu.hidden=!o; menuBtn.setAttribute('aria-expanded',o); document.body.style.overflow=o?'hidden':''; };
+  menuBtn.addEventListener('click',()=>setMenu(menu.hidden));
+  $('#menuClose').addEventListener('click',()=>setMenu(false));
+  menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>setMenu(false)));
+
+  // clicking a coverage item scrolls to its segment
+  covItems.forEach((li,i)=>li.addEventListener('click',()=>{
+    const top = covers.offsetTop + (covers.offsetHeight-H)*((i+0.5)/4);
+    scrollTo({top, behavior: reduce?'auto':'smooth'});
+  }));
+}
+</script>
+
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
