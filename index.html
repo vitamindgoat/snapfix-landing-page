@@ -359,7 +359,7 @@ footer a{text-decoration:none}
         <li><a href="privacy">Privacy</a></li>
         <li><a href="terms">Terms</a></li>
       </ul>
-      <span>© 2026 Oleksandr Rybitskyi</span>
+      <span>© 2026 Oleksandr Rybitskyi · 3D assets partly from <a href="https://polyhaven.com">Poly Haven</a> (CC0)</span>
     </div>
   </footer>
 </main>
@@ -371,11 +371,12 @@ footer a{text-decoration:none}
 <div class="tag" id="tag2" aria-hidden="true">Copper, ½ in</div>
 
 <script type="importmap">
-{"imports":{"three":"./assets/vendor/three/three.module.min.js","three/addons/environments/RoomEnvironment.js":"./assets/vendor/three/RoomEnvironment.js"}}
+{"imports":{"three":"./assets/vendor/three/three.module.min.js","three/addons/environments/RoomEnvironment.js":"./assets/vendor/three/RoomEnvironment.js","three/addons/loaders/GLTFLoader.js":"./assets/vendor/three/GLTFLoader.js"}}
 </script>
 <script type="module">
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = s => document.querySelector(s);
@@ -410,135 +411,71 @@ if(renderer){
 
   const rig = new THREE.Group(); scene.add(rig);
 
-  /* materials */
+  /* ---------- models (built in Blender, exported as glTF) ---------- */
+  const loader = new GLTFLoader();
+  const mesh=(g,m,x=0,y=0,z=0,rx=0,ry=0,rz=0)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.rotation.set(rx,ry,rz);return o};
   const M = {
-    copper: new THREE.MeshStandardMaterial({color:0xb46a3a, metalness:0.92, roughness:0.32, envMapIntensity:1.1}),
-    brass:  new THREE.MeshStandardMaterial({color:0xc9a24a, metalness:0.95, roughness:0.28, envMapIntensity:1.1}),
-    chrome: new THREE.MeshStandardMaterial({color:0xd3d7db, metalness:0.6, roughness:0.3, envMapIntensity:1.3}),
     water:  new THREE.MeshPhysicalMaterial({color:0xd6f0ff, metalness:0.1, roughness:0.05, transmission:0.4, thickness:0.2, ior:1.33, clearcoat:1, transparent:true, opacity:0.9}),
-    glass:  new THREE.MeshPhysicalMaterial({color:0xffffff, metalness:0, roughness:0.05, transmission:0.95, thickness:0.08, ior:1.5, transparent:true, opacity:0.9}),
-    bronze: new THREE.MeshStandardMaterial({color:0x3a2e24, metalness:0.7, roughness:0.5}),
-    cord:   new THREE.MeshStandardMaterial({color:0x1a1a1a, roughness:0.9}),
-    fil:    new THREE.MeshStandardMaterial({color:0xffb25a, emissive:0xff9a2a, emissiveIntensity:3, roughness:0.4}),
-    plastic:new THREE.MeshStandardMaterial({color:0x2c2c2c, roughness:0.6, metalness:0.05}),
-    grass:  new THREE.MeshStandardMaterial({color:0x3b6b35, roughness:1}),
-    soil:   new THREE.MeshStandardMaterial({color:0x4a3a2b, roughness:1}),
     wire:   new THREE.MeshBasicMaterial({color:0xf2b64b, wireframe:true, transparent:true, opacity:0, depthWrite:false}),
   };
-  const wood = (h)=>new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(0.075,0.38,h), roughness:0.88, metalness:0});
 
-  const mesh=(g,m,x=0,y=0,z=0,rx=0,ry=0,rz=0)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.rotation.set(rx,ry,rz);return o};
+  const pipe = new THREE.Group(), bulb = new THREE.Group(), fence = new THREE.Group(), sprinkler = new THREE.Group();
+  const objects=[pipe,bulb,fence,sprinkler];
+  objects.forEach(o=>{ rig.add(o); o.userData.mats=[]; o.userData.baseOp=[]; o.userData.vis=0; o.userData.wires=[]; o.visible=false; });
 
-  /* ---------- object: copper pipe with a leaking fitting ---------- */
-  const pipe = new THREE.Group();
+  // pipe: drip, landing rings and label anchors live in the same local space the model was built in
   {
-    const R=0.55, T=0.17, cx=-0.55, cy=0.8;
-    pipe.add(mesh(new THREE.CylinderGeometry(T,T,1.9,40), M.copper, cx-0.95, cy+R, 0, 0,0,Math.PI/2));
-    pipe.add(mesh(new THREE.TorusGeometry(R,T,28,40,Math.PI/2), M.copper, cx, cy, 0));
-    pipe.add(mesh(new THREE.CylinderGeometry(T,T,1.3,40), M.copper, cx+R, cy-0.65, 0));
-    pipe.add(mesh(new THREE.CylinderGeometry(0.31,0.31,0.36,6), M.brass, cx+R, -0.68, 0));
-    pipe.add(mesh(new THREE.CylinderGeometry(0.2,0.2,0.08,40), M.brass, cx+R, -0.9, 0));
-    pipe.add(mesh(new THREE.CylinderGeometry(0.19,0.19,0.34,40), M.chrome, cx+R, -1.1, 0));
-    pipe.add(mesh(new THREE.CylinderGeometry(0.42,0.42,0.05,48), M.chrome, cx-1.9, cy+R, 0, 0,0,Math.PI/2)); // wall plate
-    // wireframe overlay (AI "reading")
-    const wires=[]; pipe.children.slice().forEach(c=>{ const w=new THREE.Mesh(c.geometry, M.wire); w.position.copy(c.position); w.rotation.copy(c.rotation); w.scale.setScalar(1.015); w.visible=false; w.renderOrder=2; pipe.add(w); wires.push(w); }); pipe.userData.wires=wires;
-    // drip
-    const drop = mesh(new THREE.SphereGeometry(0.095,24,24), M.water, cx+R, -1.3, 0);
+    const drop = mesh(new THREE.SphereGeometry(0.095,24,24), M.water, 0, -1.3, 0);
     drop.scale.set(1,1.35,1); pipe.add(drop); pipe.userData.drop=drop; pipe.userData.dropBase=-1.3;
-    // landing rings for the scroll-driven fall
     const splash = new THREE.Group(); const ringM = new THREE.MeshBasicMaterial({color:0xf2b64b, transparent:true, opacity:0, side:THREE.DoubleSide, depthWrite:false});
     for(let i=0;i<3;i++){ const r=mesh(new THREE.RingGeometry(0.22,0.25,64), ringM, 0,0,0, -Math.PI/2,0,0); r.userData.i=i; splash.add(r); }
-    splash.position.set(cx+R, -1.3-7.2, 0); splash.visible=false; pipe.add(splash);
+    splash.position.set(0, -1.3-7.2, 0); splash.visible=false; pipe.add(splash);
     pipe.userData.splash=splash; pipe.userData.ringM=ringM; pipe.userData.fallDist=7.2;
-    pipe.userData.anchors = {
-      nut:  new THREE.Vector3(cx+R, -0.68, 0.35),
-      drip: new THREE.Vector3(cx+R, -1.32, 0.1),
-      run:  new THREE.Vector3(cx-0.95, cy+R+0.2, 0.1),
-    };
+    pipe.userData.anchors = { nut: new THREE.Vector3(0,-0.68,0.35), drip: new THREE.Vector3(0,-1.32,0.1), run: new THREE.Vector3(-1.5,1.55,0.1) };
     pipe.position.set(1.05,0.05,0);
   }
+  bulb.position.set(0,-0.35,0);
+  fence.position.set(0,0.1,0); fence.rotation.y=-0.35;
+  sprinkler.position.set(0.1,0.3,0);
+  bulb.userData.glow = new THREE.PointLight(0xffb25a, 0, 6, 2); bulb.userData.glow.position.set(0,-0.1,0); bulb.add(bulb.userData.glow);
+  bulb.userData.emissive = [];
 
-  /* ---------- object: pendant bulb that flickers ---------- */
-  const bulb = new THREE.Group();
-  {
-    bulb.add(mesh(new THREE.CylinderGeometry(0.018,0.018,2.4,12), M.cord, 0, 2.3, 0));
-    bulb.add(mesh(new THREE.CylinderGeometry(0.17,0.19,0.42,40), M.bronze, 0, 0.95, 0));
-    bulb.add(mesh(new THREE.CylinderGeometry(0.19,0.3,0.26,40), M.glass, 0, 0.62, 0));
-    bulb.add(mesh(new THREE.SphereGeometry(0.56,48,48), M.glass, 0, 0.05, 0));
-    const fil = new THREE.Group();
-    for(let i=0;i<3;i++){ fil.add(mesh(new THREE.TorusGeometry(0.11,0.012,8,32), M.fil, 0, 0.1 - i*0.09, 0, Math.PI/2,0,0)); }
-    fil.add(mesh(new THREE.CylinderGeometry(0.012,0.012,0.5,8), M.fil, -0.07, 0.3, 0));
-    fil.add(mesh(new THREE.CylinderGeometry(0.012,0.012,0.5,8), M.fil, 0.07, 0.3, 0));
-    bulb.add(fil);
-    const glow = new THREE.PointLight(0xffb25a, 6, 6, 2); glow.position.set(0,0.05,0); bulb.add(glow);
-    bulb.userData.glow = glow; bulb.userData.fil = M.fil;
-    bulb.position.set(0,-0.35,0);
-  }
-
-  /* ---------- object: picket fence with a broken picket ---------- */
-  const fence = new THREE.Group();
-  {
-    const post = new THREE.BoxGeometry(0.16,2.5,0.16);
-    fence.add(mesh(post, wood(0.28), -1.25, -0.15, -0.12));
-    fence.add(mesh(post, wood(0.3), 1.25, -0.15, -0.12));
-    const rail = new THREE.BoxGeometry(2.7,0.1,0.07);
-    fence.add(mesh(rail, wood(0.32), 0, 0.55, -0.06));
-    fence.add(mesh(rail, wood(0.32), 0, -0.6, -0.06));
-    const pk = new THREE.BoxGeometry(0.22,2.0,0.05);
-    const cap = new THREE.ConeGeometry(0.16,0.2,4);
-    for(let i=0;i<6;i++){
-      const x=-1+i*0.4, m=wood(0.33+((i*7)%5)*0.012);
-      if(i===3){
-        const top = new THREE.Group();
-        top.add(mesh(new THREE.BoxGeometry(0.22,0.9,0.05), m, 0, 0.55, 0));
-        top.add(mesh(cap, m, 0, 1.1, 0, 0, Math.PI/4, 0));
-        top.position.set(x,0.0,0); top.rotation.z=-0.22; fence.add(top);
-        const low = mesh(new THREE.BoxGeometry(0.22,1.0,0.05), m, 0,-0.5,0);
-        const g = new THREE.Group(); g.add(low); g.position.set(x-0.05,-0.42,0.08); g.rotation.z=0.42; g.rotation.x=0.25; fence.add(g);
-        continue;
-      }
-      fence.add(mesh(pk, m, x, 0.0, 0));
-      fence.add(mesh(cap, m, x, 1.1, 0, 0, Math.PI/4, 0));
-    }
-    fence.position.set(0,0.1,0);
-    fence.rotation.y = -0.35;
-  }
-
-  /* ---------- object: sprinkler head spraying sideways ---------- */
-  const sprinkler = new THREE.Group();
+  // sprinkler spray: two jets from the nozzle bar, one of them knocked sideways
   let dropsMesh, dropData;
   {
-    sprinkler.add(mesh(new THREE.CylinderGeometry(1.25,1.25,0.1,64), M.grass, 0, -1.25, 0));
-    sprinkler.add(mesh(new THREE.CylinderGeometry(1.25,1.25,0.12,64), M.soil, 0, -1.36, 0));
-    // grass blades
-    const blade = new THREE.BoxGeometry(0.03,0.22,0.01);
-    const blades = new THREE.InstancedMesh(blade, M.grass, 420);
-    const d = new THREE.Object3D();
-    for(let i=0;i<420;i++){
-      const a=Math.random()*Math.PI*2, r=Math.sqrt(Math.random())*1.18;
-      d.position.set(Math.cos(a)*r, -1.1+Math.random()*0.05, Math.sin(a)*r);
-      d.rotation.set((Math.random()-0.5)*0.6, Math.random()*Math.PI, (Math.random()-0.5)*0.6);
-      d.scale.set(1,0.6+Math.random()*0.9,1);
-      d.updateMatrix(); blades.setMatrixAt(i,d.matrix);
-    }
-    sprinkler.add(blades);
-    sprinkler.add(mesh(new THREE.CylinderGeometry(0.12,0.13,1.3,32), M.plastic, 0, -0.55, 0));
-    sprinkler.add(mesh(new THREE.CylinderGeometry(0.17,0.15,0.16,32), M.plastic, 0, 0.14, 0));
-    sprinkler.add(mesh(new THREE.CylinderGeometry(0.05,0.07,0.1,16), M.chrome, 0.12, 0.2, 0, 0,0,-1.1));
-    // water
-    const N=260; dropData=[];
-    dropsMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.022,8,8), M.water, N);
-    for(let i=0;i<N;i++){ dropData.push({t:Math.random(), ang:(Math.random()-0.5)*0.5, el:0.35+Math.random()*0.35, sp:3.4+Math.random()*1.6, life:0.75+Math.random()*0.25}); }
-    sprinkler.add(dropsMesh);
-    sprinkler.position.set(0.1,0.3,0);
+    const N=320; dropData=[];
+    dropsMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.02,6,6), M.water, N);
+    for(let i=0;i<N;i++){ const side=i%2?1:-1; dropData.push({t:Math.random(), side, ang:(Math.random()-0.5)*0.35+(side>0?0:0.9), el:(side>0?0.55:0.15)+Math.random()*0.25, sp:2.6+Math.random()*1.4, life:0.6+Math.random()*0.3}); }
+    sprinkler.add(dropsMesh); sprinkler.userData.spinner=null;
   }
 
-  const objects=[pipe,bulb,fence,sprinkler];
-  objects.forEach(o=>{ rig.add(o); o.userData.mats=[]; o.traverse(c=>{ if(c.isMesh && c.material!==M.wire){ o.userData.mats.push(c.material); }}); o.userData.vis=0; });
-  // unique materials list per object for fading
-  objects.forEach(o=>{ o.userData.mats=[...new Set(o.userData.mats)]; o.userData.baseOp = o.userData.mats.map(m=>m.opacity); });
+  function registerMats(group, model){
+    const mats=new Set(); model.traverse(c=>{ if(c.isMesh){ c.frustumCulled=false; (Array.isArray(c.material)?c.material:[c.material]).forEach(m=>mats.add(m)); }});
+    group.userData.mats=[...mats]; group.userData.baseOp=group.userData.mats.map(m=>m.opacity);
+    group.userData.mats.forEach(m=>{ if(m.envMapIntensity!==undefined) m.envMapIntensity=1.0; });
+  }
+  const modelReady = {};
+  function loadModel(group, file, onReady){
+    loader.load('assets/models/'+file, gltf=>{
+      const model=gltf.scene; group.add(model); group.userData.model=model; registerMats(group, model); modelReady[file]=true; onReady && onReady(model);
+    }, undefined, err=>console.warn('model failed', file, err));
+  }
+  loadModel(pipe,'pipe.glb', model=>{
+    // wireframe copy for the "reading" step
+    const meshes=[]; model.traverse(c=>{ if(c.isMesh) meshes.push(c); });
+    meshes.forEach(c=>{ const w=new THREE.Mesh(c.geometry, M.wire); w.visible=false; w.renderOrder=2; w.scale.setScalar(1.012); c.add(w); pipe.userData.wires.push(w); });
+    introStart = performance.now();
+  });
+  // the rest can arrive after the hero is up
+  setTimeout(()=>{
+    loadModel(bulb,'bulb.glb', model=>{ model.traverse(c=>{ if(c.isMesh){ const ms=Array.isArray(c.material)?c.material:[c.material]; ms.forEach(m=>{ if(m.emissiveMap||m.emissive&&(m.emissive.r+m.emissive.g+m.emissive.b)>0) bulb.userData.emissive.push(m); }); }}); });
+    loadModel(fence,'fence.glb');
+    loadModel(sprinkler,'sprinkler.glb', model=>{ sprinkler.userData.spinner = model.getObjectByName('garden_sprinkler_01_spinner') || null; });
+  }, 600);
+
+
   function setVis(o,v){
-    o.userData.vis=v; o.visible = v>0.01;
+    o.userData.vis=v; o.visible = v>0.01 && !!o.userData.model;
     const s = 0.82+0.18*v; o.scale.setScalar(s);
     o.userData.mats.forEach((m,i)=>{ const base=o.userData.baseOp[i]; m.opacity=base*v; m.transparent = v<0.995 || base<1; });
   }
@@ -576,7 +513,7 @@ if(renderer){
   }
   function project(local, o){ v.copy(local); o.localToWorld(v); v.project(camera); return {x:(v.x*0.5+0.5)*W, y:(-v.y*0.5+0.5)*H}; }
 
-  let t0=performance.now(), introStart=t0;
+  let t0=performance.now(), introStart=1e18;
   function frame(now){
     const t=(now-t0)/1000, dt=Math.min(0.05,(now-(frame.last||now))/1000); frame.last=now;
     const intro = reduce?1:smooth(0.1,1.9,(now-introStart)/1000);
@@ -654,18 +591,20 @@ if(renderer){
     // bulb flicker
     {
       const fl = reduce?1: (Math.sin(t*23)*0.5+0.5)*(Math.sin(t*7.3)>0.6?0.15:1)*(Math.random()>0.97?0.2:1);
-      bulb.userData.glow.intensity = 6*fl*bulb.userData.vis;
-      bulb.userData.fil.emissiveIntensity = 0.8+2.6*fl;
+      bulb.userData.glow.intensity = 7*fl*bulb.userData.vis;
+      bulb.userData.emissive.forEach(m=>{ m.emissiveIntensity = 0.6+3.4*fl; });
       bulb.rotation.z = Math.sin(t*0.8)*0.04;
     }
     // sprinkler water
     if(sprinkler.visible){
-      const d=new THREE.Object3D(); const g=9.8;
+      const d=new THREE.Object3D(); const g=9.8; const ox=0.15, oy=-0.42, oz=0.05;
+      if(sprinkler.userData.spinner && !reduce) sprinkler.userData.spinner.rotation.y += dt*0.9;
       for(let i=0;i<dropData.length;i++){
         const p=dropData[i]; if(!reduce) p.t+=dt/p.life; if(p.t>1) p.t-=1;
-        const tt=p.t*p.life, vx=Math.cos(p.el)*p.sp, vy=Math.sin(p.el)*p.sp;
-        const x=0.12+vx*tt*Math.cos(p.ang), z=vx*tt*Math.sin(p.ang), y=0.2+vy*tt-0.5*g*tt*tt;
-        d.position.set(x,Math.max(y,-1.2),z); d.scale.setScalar(y<-1.15?0.001:1+tt*0.6); d.updateMatrix(); dropsMesh.setMatrixAt(i,d.matrix);
+        const tt=p.t*p.life, vh=Math.cos(p.el)*p.sp, vy=Math.sin(p.el)*p.sp;
+        const dir=p.ang + (p.side>0?0:Math.PI) - 0.5;
+        const x=ox+p.side*0.45*Math.cos(0.5)+vh*tt*Math.cos(dir), z=oz+vh*tt*Math.sin(dir), y=oy+vy*tt-0.5*g*tt*tt;
+        d.position.set(x,Math.max(y,-1.22),z); d.scale.setScalar(y<-1.18?0.001:1+tt*0.5); d.updateMatrix(); dropsMesh.setMatrixAt(i,d.matrix);
       }
       dropsMesh.instanceMatrix.needsUpdate=true;
     }
@@ -676,8 +615,8 @@ if(renderer){
     rails.forEach((r,i)=>r.style.setProperty('--f', clamp(S.p1*3-i,0,1)));
     result.classList.toggle('on', inHow && S.p1>0.7); how.firstElementChild.classList.toggle('answer', inHow && S.p1>0.7);
 
-    if(inHow && pipe.visible){
-      const b=screenBox(pipe);
+    if(inHow && pipe.visible && pipe.userData.model){
+      const b=screenBox(pipe.userData.model);
       const cx=(b.x0+b.x1)/2, cy=(b.y0+b.y1)/2, bw=b.x1-b.x0, bh=b.y1-b.y0;
       // viewfinder: shrinks from loose to snug during step 1
       const s1=smooth(0.02,0.3,S.p1), vfo=env(S.p1,0.0,0.06,0.33,0.4);
